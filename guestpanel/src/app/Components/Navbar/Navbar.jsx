@@ -1,9 +1,13 @@
 "use client"
 import { useState } from 'react';
 import { Menu, X, Search, User } from 'lucide-react';
+import Login from './Login/Login';
+import Signup from './Signup/Signup';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isloginmodalopen, setisloginmodalopen] = useState(false);
+  const [issignupmodalopen, setissignupmodalopen] = useState(false);
 
   const navItems = [
     { name: 'Home', href: '#' },
@@ -12,8 +16,45 @@ export default function Navbar() {
     { name: 'About', href: '#' }
   ];
 
+  const handlelogin = () => {
+    setisloginmodalopen(true);
+  };
+
+  const handleCloseLogin = () => {
+    setisloginmodalopen(false);
+  };
+
+  const handleSignupClick = () => {
+    setisloginmodalopen(false);
+    setissignupmodalopen(true);
+  };
+
+  const handleCloseSignup = () => {
+    setissignupmodalopen(false);
+  };
+
+  const handleLoginFromSignup = () => {
+    setissignupmodalopen(false);
+    setisloginmodalopen(true);
+  };
+
   return (
     <nav className="bg-gray-800 text-white shadow-lg">
+      {/* Login Modal */}
+      <Login 
+        isModalOpen={isloginmodalopen} 
+        onClose={handleCloseLogin}
+        onSignupClick={handleSignupClick}
+      />
+
+      {issignupmodalopen && (
+        <Signup
+          isModalOpen={issignupmodalopen}
+          onClose={handleCloseSignup}
+          onLoginClick={handleLoginFromSignup}
+        />
+      )}
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
@@ -45,7 +86,10 @@ export default function Navbar() {
             <button className="text-gray-300 hover:text-white p-2 rounded-md transition-colors duration-200">
               <Search size={20} />
             </button>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-2">
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center space-x-2" 
+              onClick={handlelogin}
+            >
               <User size={16} />
               <span>Login</span>
             </button>
@@ -76,7 +120,7 @@ export default function Navbar() {
                 {item.name}
               </a>
             ))}
-            
+
             {/* Mobile Search & Login */}
             <div className="pt-4 pb-3 border-t border-gray-700">
               <div className="flex flex-col space-y-3 px-3">
@@ -84,7 +128,10 @@ export default function Navbar() {
                   <Search size={20} />
                   <span>Search</span>
                 </button>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2">
+                <button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2"
+                  onClick={handlelogin}
+                >
                   <User size={16} />
                   <span>Login</span>
                 </button>
@@ -96,3 +143,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
