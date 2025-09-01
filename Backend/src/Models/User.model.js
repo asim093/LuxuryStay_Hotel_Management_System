@@ -4,14 +4,22 @@ const Userschema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  profileImage : {type : String , required : true},
+  profileImage: { type: String, required: true },
+  role: { 
+    type: String, 
+    enum: ['Admin', 'Manager', 'Receptionist', 'Housekeeping', 'Guest'], 
+    default: 'Guest' 
+  },
+  isActive: { type: Boolean, default: true },
+  lastLogin: { type: Date },
   token: { type: String, default: "" },
   otp: {
     value: { type: String },
     expireAt: { type: Date },
-    verified: { type: Boolean, default: "false" },
+    verified: { type: Boolean, default: false },
   },
+}, {
+  timestamps: true
 });
 
-
-export const Usermodle = mongoose.model("User" , Userschema);
+export const Usermodle = mongoose.model("User", Userschema);

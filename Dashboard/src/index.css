@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+  }
+  
+  .stat-card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400;
+  }
+
+  /* Modal animations */
+  .modal {
+    @apply transition-all duration-300;
+  }
+
+  /* Table improvements */
+  .table th {
+    @apply font-semibold text-gray-700 bg-gray-50;
+  }
+
+  .table td {
+    @apply align-middle;
+  }
+
+  /* Form improvements */
+  .input:focus, .select:focus {
+    @apply ring-2 ring-blue-500 border-blue-500;
+  }
+
+  /* Badge improvements */
+  .badge {
+    @apply font-medium;
+  }
+
+  /* Button improvements */
+  .btn {
+    @apply font-medium transition-all duration-200;
+  }
+
+  .btn:active {
+    @apply transform scale-95;
+  }
+
+  /* Dropdown improvements */
+  .dropdown-content {
+    @apply shadow-lg border border-gray-200;
+  }
+
+  /* Loading states */
+  .loading {
+    @apply animate-spin;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent;
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+}

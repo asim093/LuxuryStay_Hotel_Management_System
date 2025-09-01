@@ -1,6 +1,9 @@
 "use client"
 import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Users, Search } from 'lucide-react';
+import HotelCard from './Components/Cards/HotelCard';
+import OfferCard from './Components/Cards/OfferCard';
+import TestimonialCard from './Components/Cards/TestimonialCard';
 
 export default function HomePage() {
   const [searchData, setSearchData] = useState({
@@ -44,6 +47,91 @@ export default function HomePage() {
     }
   ];
 
+  // Featured hotels data
+  const featuredHotels = [
+    {
+      image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "The Grand Resort",
+      rating: 5.0,
+      nights: 5,
+      price: 450,
+      badge: "Best Seller",
+      badgeColor: "bg-blue-600"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "The Grand Resort",
+      rating: 4.8,
+      nights: 3,
+      price: 450,
+      badge: null
+    },
+    {
+      image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "The Grand Resort",
+      rating: 4.5,
+      nights: 4,
+      price: 450,
+      badge: "Best Seller",
+      badgeColor: "bg-orange-500"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "The Grand Resort",
+      rating: 4.5,
+      nights: 2,
+      price: 450,
+      badge: null
+    }
+  ];
+
+  // Exclusive offers data
+  const exclusiveOffers = [
+    {
+      image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "Romance Escape Package",
+      description: "Indulge in a romantic night stay with complimentary champagne and special amenities.",
+      badge: "25% OFF",
+      badgeColor: "bg-blue-600"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "Sustainable Getaway",
+      description: "Enjoy an environmentally conscious stay with our eco-friendly accommodations and practices.",
+      badge: "ECO SAVE",
+      badgeColor: "bg-green-600"
+    },
+    {
+      image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+      title: "Family Wild Specials",
+      description: "Book for the family getaway and give out best experience with wild nature and adventure.",
+      badge: "KID STAY",
+      badgeColor: "bg-orange-600"
+    }
+  ];
+
+  // Testimonials data
+  const testimonials = [
+    {
+      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80",
+      name: "Yanira Rodriguez",
+      rating: 5,
+      testimonial: "I've used many booking platforms before, but none compare to the phenomenal experience I had with QuickStay. The booking process was so smooth and hassle-free."
+    },
+    {
+      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80",
+      name: "Devara Rodriguez",
+      rating: 5,
+      testimonial: "The experience booking platform behind our success, we've been accommodations worldwide and can confidently stand out from everyone."
+    },
+    {
+      image: "https://images.unsplash.com/photo-1494790108755-2616b612b401?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80",
+      name: "Emma Rodriguez",
+      rating: 5,
+      testimonial: "I've been overwhelm looking platforms before, but none compare to the phenomenal experience I had with QuickStay. The booking process."
+    }
+  ];
+
   const handleInputChange = (field, value) => {
     setSearchData(prev => ({
       ...prev,
@@ -83,12 +171,18 @@ export default function HomePage() {
               index === currentSlide ? 'opacity-100' : 'opacity-0'
             }`}
           >
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat transform scale-105"
-              style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(${slide.image})`
+            <img
+              src={slide.image}
+              alt={slide.title}
+              className="w-full h-full object-cover"
+              style={{ 
+                objectPosition: 'center',
+                maxWidth: '100vw',
+                maxHeight: '100vh'
               }}
             />
+            {/* Dark overlay for better text readability */}
+            <div className="absolute inset-0 bg-black/40" />
           </div>
         ))}
 
@@ -259,139 +353,18 @@ export default function HomePage() {
 
           {/* Hotels Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {/* Hotel 1 */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="The Grand Resort"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  Best Seller
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">The Grand Resort</h3>
-                  <div className="flex items-center space-x-1">
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(5)}
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">5.0</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-3">5 Nights</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold text-gray-900">$450</span>
-                    <span className="text-sm text-gray-500"> / night</span>
-                  </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Hotel 2 */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="The Grand Resort"
-                  className="w-full h-48 object-cover"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">The Grand Resort</h3>
-                  <div className="flex items-center space-x-1">
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(4)}★
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">4.8</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-3">3 Nights</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold text-gray-900">$450</span>
-                    <span className="text-sm text-gray-500"> / night</span>
-                  </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Hotel 3 */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="The Grand Resort"
-                  className="w-full h-48 object-cover"
-                />
-                <div className="absolute top-3 left-3 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  Best Seller
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">The Grand Resort</h3>
-                  <div className="flex items-center space-x-1">
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(4)}★
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">4.5</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-3">4 Nights</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold text-gray-900">$450</span>
-                    <span className="text-sm text-gray-500"> / night</span>
-                  </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Hotel 4 */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="The Grand Resort"
-                  className="w-full h-48 object-cover"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-bold text-gray-900">The Grand Resort</h3>
-                  <div className="flex items-center space-x-1">
-                    <div className="flex text-yellow-400">
-                      {'★'.repeat(4)}★
-                    </div>
-                    <span className="text-sm font-semibold text-gray-700">4.5</span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-3">2 Nights</p>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-2xl font-bold text-gray-900">$450</span>
-                    <span className="text-sm text-gray-500"> / night</span>
-                  </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors duration-200">
-                    View Details
-                  </button>
-                </div>
-              </div>
-            </div>
+            {featuredHotels.map((hotel, index) => (
+              <HotelCard
+                key={index}
+                image={hotel.image}
+                title={hotel.title}
+                rating={hotel.rating}
+                nights={hotel.nights}
+                price={hotel.price}
+                badge={hotel.badge}
+                badgeColor={hotel.badgeColor}
+              />
+            ))}
           </div>
 
           {/* View All Hotels Button */}
@@ -430,86 +403,16 @@ export default function HomePage() {
 
           {/* Offers Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Offer 1 */}
-            <div className="relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative h-64">
-                <img
-                  src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="Romance Escape Package"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute top-4 left-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  25% OFF
-                </div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-xl font-bold mb-2">Romance Escape Package</h3>
-                  <p className="text-sm opacity-90 mb-3">
-                    Indulge in a romantic night stay with complimentary champagne and special amenities.
-                  </p>
-                  <button className="flex items-center space-x-2 text-white hover:text-blue-200 transition-colors duration-200">
-                    <span className="font-semibold">View Offers</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Offer 2 */}
-            <div className="relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative h-64">
-                <img
-                  src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="Sustainable Getaway"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  ECO SAVE
-                </div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-xl font-bold mb-2">Sustainable Getaway</h3>
-                  <p className="text-sm opacity-90 mb-3">
-                    Enjoy an environmentally conscious stay with our eco-friendly accommodations and practices.
-                  </p>
-                  <button className="flex items-center space-x-2 text-white hover:text-blue-200 transition-colors duration-200">
-                    <span className="font-semibold">View Offers</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Offer 3 */}
-            <div className="relative bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-              <div className="relative h-64">
-                <img
-                  src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
-                  alt="Family Wild Specials"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute top-4 left-4 bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  KID STAY
-                </div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="text-xl font-bold mb-2">Family Wild Specials</h3>
-                  <p className="text-sm opacity-90 mb-3">
-                    Book for the family getaway and give out best experience with wild nature and adventure.
-                  </p>
-                  <button className="flex items-center space-x-2 text-white hover:text-blue-200 transition-colors duration-200">
-                    <span className="font-semibold">View Offers</span>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+            {exclusiveOffers.map((offer, index) => (
+              <OfferCard
+                key={index}
+                image={offer.image}
+                title={offer.title}
+                description={offer.description}
+                badge={offer.badge}
+                badgeColor={offer.badgeColor}
+              />
+            ))}
           </div>
         </div>
       </section>
@@ -530,68 +433,20 @@ export default function HomePage() {
 
           {/* Testimonials Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Testimonial 1 */}
-            <div className="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-              <div className="flex items-center mb-4">
-                <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80"
-                  alt="Yanira Rodriguez"
-                  className="w-12 h-12 rounded-full object-cover mr-4"
-                />
-                <div>
-                  <h4 className="font-semibold text-gray-900">Yanira Rodriguez</h4>
-                  <div className="flex text-yellow-400 text-sm">
-                    {'★'.repeat(5)}
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "I've used many booking platforms before, but none compare to the phenomenal experience I had with QuickStay. The booking process was so smooth and hassle-free."
-              </p>
-            </div>
-
-            {/* Testimonial 2 */}
-            <div className="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-              <div className="flex items-center mb-4">
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80"
-                  alt="Devara Rodriguez"
-                  className="w-12 h-12 rounded-full object-cover mr-4"
-                />
-                <div>
-                  <h4 className="font-semibold text-gray-900">Devara Rodriguez</h4>
-                  <div className="flex text-yellow-400 text-sm">
-                    {'★'.repeat(5)}
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "The experience booking platform behind our success, we've been accommodations worldwide and can confidently stand out from everyone."
-              </p>
-            </div>
-
-            {/* Testimonial 3 */}
-            <div className="bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
-              <div className="flex items-center mb-4">
-                <img
-                  src="https://images.unsplash.com/photo-1494790108755-2616b612b401?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=150&q=80"
-                  alt="Emma Rodriguez"
-                  className="w-12 h-12 rounded-full object-cover mr-4"
-                />
-                <div>
-                  <h4 className="font-semibold text-gray-900">Emma Rodriguez</h4>
-                  <div className="flex text-yellow-400 text-sm">
-                    {'★'.repeat(5)}
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-600 italic">
-                "I've been overwhelm looking platforms before, but none compare to the phenomenal experience I had with QuickStay. The booking process."
-              </p>
-            </div>
+            {testimonials.map((testimonial, index) => (
+              <TestimonialCard
+                key={index}
+                image={testimonial.image}
+                name={testimonial.name}
+                rating={testimonial.rating}
+                testimonial={testimonial.testimonial}
+              />
+            ))}
           </div>
         </div>
       </section>
+
+    
 
       <section className="relative z-10 bg-gray-900 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

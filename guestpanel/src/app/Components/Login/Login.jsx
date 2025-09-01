@@ -1,226 +1,280 @@
-import React, { useState } from 'react';
-import { X, Eye, EyeOff } from 'lucide-react';
+"use client"
+import { useState, useEffect } from 'react';
+import { Menu, X, Search, User, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { useAuth } from '../../context/AuthContext';
+import SignupModal from '../Signup/Signup';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
-const Login = ({ isModalOpen, onClose, onSignupClick }) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false); // 🔄 New
-
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
+const LoginModal = ({ isOpen, onClose , handleSignupClick }) => {
+  const { loginStart, loginSuccess, loginFailure, loading, loadingMessage, loadingProgress } = useAuth();
+  const [isClient, setIsClient] = useState(false);
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    setError,
+    clearErrors
+  } = useForm({
+    defaultValues: {
+      email: '',
+      password: ''
+    }
   });
 
-  const [errors, setErrors] = useState({}); // 🔄 New
+  const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
-  const handleInputChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-    // Clear individual field error
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: '' });
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
-      newErrors.email = 'Enter a valid email';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-
-    setIsLoading(true);
+  const onSubmit = async (data) => {
     try {
+      setApiError('');
+      clearErrors();
+      loginStart('Signing in...');
+
       const response = await fetch('http://localhost:3001/api/user/Login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(data)
       });
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (response.ok) {
-        console.log('Login successful:', data);
-        // ✅ Handle successful login
-        alert('Login successful!');
-        closeModal();
+        console.log('Login successful:', result);
+        loginSuccess(result);
+        setTimeout(() => {
+          handleCloseModal();
+        }, 1000);
       } else {
-        // ❌ Handle login errors
-        if (data.message) {
-          if (data.message.includes('invalid') || data.message.includes('wrong')) {
-            setErrors({ general: 'Invalid email or password' });
-          } else {
-            setErrors({ general: data.message });
-          }
+        const errorMessage = result.message || 'Login failed. Try again.';
+        if (result.message.includes('invalid') || result.message.includes('wrong')) {
+          setApiError('Invalid email or password');
         } else {
-          setErrors({ general: 'Login failed. Try again.' });
+          setApiError(result.message);
         }
+        loginFailure(errorMessage);
       }
     } catch (error) {
       console.error('Login error:', error);
-      setErrors({ general: 'Network error. Please try again.' });
-    } finally {
-      setIsLoading(false);
+      const errorMessage = 'Network error. Please try again.';
+      setApiError(errorMessage);
+      loginFailure(errorMessage);
     }
   };
 
-  const resetForm = () => {
-    setFormData({ email: '', password: '' });
+  const handleCloseModal = () => {
+    reset();
     setShowPassword(false);
-    setErrors({});
+    setApiError('');
+    clearErrors();
+    onClose();
   };
 
-  const closeModal = () => {
-    resetForm();
-    onClose?.();
+  const handleIsSignupClick = () => {
+    handleCloseModal();
+    handleSignupClick();
   };
 
-  const handleSignupClick = () => {
-    closeModal();
-    onSignupClick?.();
+  const handleForgotPasswordClick = () => {
+    setShowForgotPassword(true);
   };
 
-  if (!isModalOpen) return null;
+  const handleForgotPasswordClose = () => {
+    setShowForgotPassword(false);
+  };
+
+  if (!isClient || !isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-800">Welcome Back</h2>
-          <button
-            onClick={closeModal}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-            disabled={isLoading}
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <div className="p-6 space-y-4">
-          {/* General Error */}
-          {errors.general && (
-            <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-2 rounded-md text-sm">
-              {errors.general}
+    <>
+      <dialog className="modal modal-open">
+        <div className="modal-box max-w-md">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                <LogIn size={20} className="text-white" />
+              </div>
+              <h3 className="font-bold text-2xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Welcome Back
+              </h3>
             </div>
-          )}
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              className={`w-full px-3 py-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                errors.email ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder="Enter your email"
-              required
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          {/* Password */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 pr-10 text-black border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                }`}
-                placeholder="Enter your password"
-                required
-                disabled={isLoading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                disabled={isLoading}
-              >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-sm text-red-500 mt-1">{errors.password}</p>
-            )}
-          </div>
-
-          {/* Forgot Password */}
-          <div className="text-right">
             <button
-              type="button"
-              className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
-              disabled={isLoading}
+              className="btn btn-sm btn-circle btn-ghost hover:bg-gray-100"
+              onClick={handleCloseModal}
+              disabled={isSubmitting}
             >
-              Forgot Password?
+              <X size={20} />
             </button>
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="button"
-            onClick={handleSubmit}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-              isLoading
-                ? 'bg-gray-400 text-white cursor-not-allowed'
-                : 'bg-blue-500 text-white hover:bg-blue-600'
-            }`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Signing In...' : 'Sign In'}
-          </button>
+          {/* Subtitle */}
+          <p className="text-gray-600 mb-6 text-center">
+            Sign in to your account to continue your journey
+          </p>
 
-          {/* Sign Up Link */}
-          <div className="text-center pt-4 border-t">
-            <p className="text-sm text-gray-600">
-              Don&apos;t have an account?
+          <div className="space-y-5">
+            {apiError && (
+              <div className="alert alert-error shadow-lg">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium">{apiError}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Email Field */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium flex items-center">
+                  <Mail size={16} className="mr-2 text-blue-600" />
+                  Email Address
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className={`input input-bordered w-full pl-10 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.email ? 'input-error' : 'hover:border-blue-300'
+                  }`}
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+                      message: 'Enter a valid email'
+                    }
+                  })}
+                  disabled={isSubmitting}
+                />
+                <Mail size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              </div>
+              {errors.email && (
+                <label className="label">
+                  <span className="label-text-alt text-error flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.email.message}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Password Field */}
+            <div className="form-control">
+              <label className="label">
+                <span className="label-text font-medium flex items-center">
+                  <Lock size={16} className="mr-2 text-blue-600" />
+                  Password
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Enter your password"
+                  className={`input input-bordered w-full pl-10 pr-12 transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    errors.password ? 'input-error' : 'hover:border-blue-300'
+                  }`}
+                  {...register('password', {
+                    required: 'Password is required'
+                  })}
+                  disabled={isSubmitting}
+                />
+                <Lock size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {errors.password && (
+                <label className="label">
+                  <span className="label-text-alt text-error flex items-center">
+                    <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.password.message}
+                  </span>
+                </label>
+              )}
+            </div>
+
+            {/* Forgot Password */}
+            <div className="text-right">
               <button
                 type="button"
-                onClick={handleSignupClick}
-                className="ml-1 text-blue-500 hover:text-blue-600 transition-colors font-medium"
-                disabled={isLoading}
+                className="link link-primary text-sm hover:text-blue-700 transition-colors duration-200 font-medium"
+                onClick={handleForgotPasswordClick}
+                disabled={isSubmitting}
               >
-                Sign Up
+                Forgot Password?
               </button>
-            </p>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+              className={`btn btn-primary w-full h-12 text-base font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 ${
+                isSubmitting ? 'loading' : ''
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <div className="flex items-center space-x-2">
+                  <div className="loading loading-spinner loading-sm"></div>
+                  <span>Signing In...</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <LogIn size={18} />
+                  <span>Sign In</span>
+                </div>
+              )}
+            </button>
+
+            {/* Sign Up Link */}
+            <div className="divider text-gray-400">or</div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <button
+                  type="button"
+                  className="link link-primary font-semibold hover:text-blue-700 transition-colors duration-200"
+                  onClick={handleIsSignupClick}
+                  disabled={isSubmitting}
+                >
+                  Sign Up
+                </button>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </dialog>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPassword}
+        onClose={handleForgotPasswordClose}
+        onBackToLogin={() => setShowForgotPassword(false)}
+      />
+    </>
   );
 };
 
-export default Login;
+export default LoginModal
