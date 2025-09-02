@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, href, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -16,7 +16,8 @@ import {
   Search,
   ChevronDown,
   Cog,
-  Shield
+  Shield,
+  User2
 } from 'lucide-react';
 import { removeUser } from '../../store/features/user-slice';
 import { useDispatch, useSelector } from 'react-redux';
@@ -31,6 +32,7 @@ const DashboardLayout = ({ children, onLogout }) => {
 
   const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    {name:"All Users" , icon:User2 , href:'/allUsers'},
     { name: 'Staff Management', icon: Users, href: '/staff' },
     { name: 'Room Management', icon: Hotel, href: '/rooms' },
     { name: 'Reservations', icon: Calendar, href: '/reservations' },

@@ -18,6 +18,7 @@ import {
 import { removeUser } from './store/features/user-slice';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // CSS import zaroori hai
+import AllUsers from './components/AllUsers/AllUsers';
 
 function App() {
   const dispatch = useDispatch();
@@ -58,13 +59,22 @@ function App() {
           }
         />
 
-        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <DashboardLayout onLogout={handleLogout}>
                 <DashboardHome />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/allUsers"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <AllUsers />
               </DashboardLayout>
             </ProtectedRoute>
           }

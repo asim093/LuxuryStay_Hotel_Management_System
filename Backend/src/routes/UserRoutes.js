@@ -28,15 +28,12 @@ router.post("/forgotpassword", forgotPassword);
 router.post("/verifyotp", verifyOtp);
 router.post("/resetpassword", resetPassword);
 
-// Protected routes - require authentication
 router.get("/profile", authMiddleware, getProfile);
 
-// Admin only routes
 router.get("/users", authMiddleware, requireAdmin, getAllUsers);
-router.patch("/users/:userId/role", authMiddleware, requireAdmin, updateUserRole);
+router.patch("/:userId/role", authMiddleware, requireAdmin, updateUserRole);
 router.patch("/users/:userId/status", authMiddleware, requireAdmin, toggleUserStatus);
 
-// Role-specific routes (examples)
 router.get("/admin/dashboard", authMiddleware, requireAdmin, (req, res) => {
   res.json({ message: "Admin Dashboard", role: req.userRole });
 });

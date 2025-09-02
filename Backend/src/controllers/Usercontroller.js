@@ -18,7 +18,6 @@ export const Signup = async (req, res) => {
       return res.status(400).json({ message: "Please upload a profile image." });
     }
 
-    // Validate role
     const validRoles = ['Admin', 'Manager', 'Receptionist', 'Housekeeping', 'Guest'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role specified." });
@@ -111,7 +110,6 @@ export const Login = async (req, res) => {
   }
 };
 
-// Admin only: Get all users
 export const getAllUsers = async (req, res) => {
   try {
     const users = await Usermodle.find({}, { password: 0, token: 0, otp: 0 });
@@ -149,7 +147,6 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
-// Admin only: Toggle user active status
 export const toggleUserStatus = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -178,7 +175,6 @@ export const toggleUserStatus = async (req, res) => {
   }
 };
 
-// Get current user profile
 export const getProfile = async (req, res) => {
   try {
     const user = await Usermodle.findById(req.user.id, { password: 0, token: 0, otp: 0 });
