@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
   const isClient = useClientSide();
 
   // Load auth state from localStorage on mount (client-side only)
@@ -40,6 +41,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('authState');
       }
     }
+    setIsInitialized(true);
   }, [isClient]);
 
   // Save auth state to localStorage whenever it changes (client-side only)
@@ -159,6 +161,7 @@ export const AuthProvider = ({ children }) => {
     loadingMessage,
     loadingProgress,
     error,
+    isInitialized,
     loginStart,
     loginSuccess,
     loginFailure,

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "../../context/AuthContext";
 
 const SignupModal = ({ isOpen, onClose, onLoginClick }) => {
-  const { signupStart, signupSuccess, signupFailure, loading, loadingMessage, loadingProgress } = useAuth();
+  const { signupStart, signupSuccess, signupFailure, loading, loadingMessage, loadingProgress, isInitialized } = useAuth();
   const [isClient, setIsClient] = useState(false);
   
   const {
@@ -153,7 +153,7 @@ const SignupModal = ({ isOpen, onClose, onLoginClick }) => {
 
   const passwordStrength = getPasswordStrength();
 
-  if (!isClient || !isOpen) return null;
+  if (!isClient || !isInitialized || !isOpen) return null;
 
   return (
     <dialog className="modal modal-open">

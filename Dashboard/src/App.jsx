@@ -1,11 +1,13 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import Login from './components/Auth/Login';
-import Signup from './components/Auth/Signup';
+import Login from './pages/Auth/Login';
+import Signup from './pages/Auth/Signup';
 import DashboardLayout from './components/Layout/DashboardLayout';
-import DashboardHome from './components/Dashboard/DashboardHome';
-import StaffManagement from './components/Staff/StaffManagement';
+import DashboardHome from './pages/Dashboard/DashboardHome';
+import StaffManagement from './pages/Staff/StaffManagement';
+import RoomManagement from './pages/Rooms/RoomManagement';
+import BookingManagement from './pages/Bookings/BookingManagement';
 import PlaceholderModule from './components/Placeholder/PlaceholderModule';
 import { initializeSampleData } from './utils/sampleData';
 import {
@@ -17,8 +19,12 @@ import {
 } from 'lucide-react';
 import { removeUser } from './store/features/user-slice';
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'; // CSS import zaroori hai
-import AllUsers from './components/AllUsers/AllUsers';
+import 'react-toastify/dist/ReactToastify.css';
+import AllUsers from './pages/AllUsers/AllUsers';
+import Managers from './pages/Managers/Managers';
+import HouseKeeping from './pages/HouseKeeping/HouseKeeping';
+import Receptionist from './pages/Receptionist/Receptionist';
+import Maintenance from './pages/Maintenance/Maintenance';
 
 function App() {
   const dispatch = useDispatch();
@@ -27,6 +33,14 @@ function App() {
   useEffect(() => {
     // Initialize sample data
     initializeSampleData();
+
+    // Check for existing token on app startup
+    const token = localStorage.getItem('token');
+    if (token && !isAuthenticated) {
+      // You could add token validation here if needed
+      // For now, we'll just check if token exists
+      console.log('Token found in localStorage');
+    }
   }, []);
 
   const handleLogout = () => {
@@ -80,6 +94,47 @@ function App() {
           }
         />
         <Route
+          path="/manager"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <Managers />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/housekeeping"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <HouseKeeping />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/receptionist"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <Receptionist />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/maintenance"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <Maintenance />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/staff"
           element={
             <ProtectedRoute>
@@ -94,19 +149,7 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule
-                  title="Room Management"
-                  description="Manage hotel rooms, room types, availability, and maintenance schedules"
-                  icon={Hotel}
-                  features={[
-                    'Room inventory management',
-                    'Room type configuration',
-                    'Availability tracking',
-                    'Maintenance scheduling',
-                    'Room status updates',
-                    'Housekeeping assignments'
-                  ]}
-                />
+                <RoomManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }
@@ -116,19 +159,7 @@ function App() {
           element={
             <ProtectedRoute>
               <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule
-                  title="Reservations"
-                  description="Handle guest bookings, check-ins, check-outs, and reservation management"
-                  icon={Calendar}
-                  features={[
-                    'Guest booking management',
-                    'Check-in/Check-out process',
-                    'Reservation calendar view',
-                    'Guest information tracking',
-                    'Booking confirmations',
-                    'Cancellation handling'
-                  ]}
-                />
+                <BookingManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }

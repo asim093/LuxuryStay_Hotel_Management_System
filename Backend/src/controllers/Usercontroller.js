@@ -1,8 +1,9 @@
 import express from "express";
-import { Usermodle } from "../Models/User.model.js";  
+import { Usermodle } from "../Models/User.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import sendMail from "../utils/email-send.js"; 
+import mongoose from "mongoose";
+import sendMail from "../utils/email-send.js";
 
 export const Signup = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ export const Signup = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const profileImage = req.file.path; 
+    const profileImage = req.file.path;
 
     const newUser = await Usermodle.create({
       name,
@@ -40,7 +41,8 @@ export const Signup = async (req, res) => {
     });
 
     const payload = { user: { id: newUser._id } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY || "defaultsecret", { expiresIn: "1h" });
+    const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 
     newUser.token = token;
     await newUser.save();
@@ -86,14 +88,15 @@ export const Login = async (req, res) => {
     }
 
     const payload = { user: { id: user._id } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY || "defaultsecret", { expiresIn: "1h" });
+    const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 
     user.token = token;
     user.lastLogin = new Date();
     await user.save();
 
-    res.json({ 
-      message: "Login Successful", 
+    res.json({
+      message: "Login Successful",
       user: {
         id: user._id,
         name: user.name,
@@ -110,22 +113,195 @@ export const Login = async (req, res) => {
   }
 };
 
+
+export const AddUsers = async (req, res) => {
+  try {
+    const { name, email, password, role, phone } = req.body;
+
+    // Validation
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({
+        message: "Allfield is required",
+        status: "failed"
+      });
+    }
+
+    const validRoles = ['Manager', "Staff", 'Receptionist', 'Housekeeping', 'Maintenance'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role. Valid roles: Manager, Receptionist, Housekeeping, Maintenance",
+        status: "failed"
+      });
+    }
+
+
+    const existingUser = await Usermodle.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        message: "User with this email already exists",
+        status: "failed"
+      });
+    }
+
+    let tempPassword = password;
+    if (!password) {
+      tempPassword = Math.random().toString(36).slice(-8) + Math.floor(Math.random() * 10);
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(tempPassword, saltRounds);
+
+    const newUser = new Usermodle({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      phone,
+      isActive: true,
+      createdAt: new Date(),
+    });
+
+    await newUser.save();
+
+    try {
+      await sendMail({
+        email: [email],
+        templateName: "new_user_added",
+        templateVariables: {
+          userName: name,
+          userRole: role,
+          tempPassword: tempPassword
+        }
+      });
+
+      console.log(`Welcome email sent to ${email} for role: ${role}`);
+    } catch (emailError) {
+      console.error('Email sending failed:', emailError);
+    }
+
+    res.status(201).json({
+      message: `${role} added successfully. Welcome email sent to ${email}`,
+      status: "success",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        phone: newUser.phone,
+        createdAt: newUser.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error('AddUsers error:', error);
+    res.status(500).json({
+      message: "Internal Server Error",
+      status: "failed"
+    });
+  }
+};
+
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await Usermodle.find({}, { password: 0, token: 0, otp: 0 });
+    const { role } = req.params;
+
+    let users;
+    if (role) {
+      users = await Usermodle.find({ role }, { password: 0, token: 0, otp: 0 });
+    } else {
+      users = await Usermodle.find({}, { password: 0, token: 0, otp: 0 });
+    }
+
     res.json({ users });
+
   } catch (error) {
     console.error("Get all users error:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
+export const EditUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, password, phone } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    const user = await Usermodle.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // update fields agar provide kiye gaye hain
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+
+    if (password) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      user.password = hashedPassword;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      message: "User updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      },
+    });
+  } catch (error) {
+    console.error("Edit user error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id, entity } = req.params;
+
+    if (!id || !entity) {
+      return res.status(400).json({ message: "Id and entity are required" });
+    }
+
+    const db = mongoose.connection.db;
+
+    const objectId = new mongoose.Types.ObjectId(id);
+
+    const doc = await db.collection(entity).findOne({ _id: objectId });
+
+    if (!doc) {
+      return res.status(404).json({ message: "Entity not found" });
+    }
+
+    await db.collection(entity).deleteOne({ _id: objectId });
+
+    return res.status(200).json({
+      message: `${entity} record deleted successfully`,
+      deletedId: id,
+    });
+
+  } catch (error) {
+    console.error("Delete error:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 export const updateUserRole = async (req, res) => {
   try {
     const { userId } = req.params;
     const { role } = req.body;
 
-    const validRoles = ['Admin', 'Manager', 'Receptionist', 'Housekeeping', 'Guest'];
+    const validRoles = ['Admin', 'Manager', 'Receptionist', "Staff", 'Housekeeping', 'Guest'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role specified." });
     }
@@ -159,7 +335,7 @@ export const toggleUserStatus = async (req, res) => {
     user.isActive = !user.isActive;
     await user.save();
 
-    res.json({ 
+    res.json({
       message: `User ${user.isActive ? 'activated' : 'deactivated'} successfully`,
       user: {
         id: user._id,
@@ -214,7 +390,7 @@ export const forgotPassword = async (req, res) => {
 
     user.otp = {
       value: otp.toString(),
-      expireAt: new Date(Date.now() + 1000 * 60 * 10), 
+      expireAt: new Date(Date.now() + 1000 * 60 * 10),
       verified: false,
     };
 
@@ -276,13 +452,14 @@ export const resetPassword = async (req, res) => {
     user.otp.verified = false;
 
     const payload = { user: { id: user._id } };
-    const token = jwt.sign(payload, process.env.JWT_SECRET_KEY, { expiresIn: "1y" });
+    const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
+    const token = jwt.sign(payload, jwtSecret, { expiresIn: "1y" });
 
     await user.save();
 
     res.status(200).json({
       message: "Password Reset Successful",
-      token, 
+      token,
     });
   } catch (error) {
     res.status(500).json({ message: "Internal Server Error", status: "failed" });

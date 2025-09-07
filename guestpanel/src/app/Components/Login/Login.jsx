@@ -7,7 +7,7 @@ import SignupModal from '../Signup/Signup';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 const LoginModal = ({ isOpen, onClose , handleSignupClick }) => {
-  const { loginStart, loginSuccess, loginFailure, loading, loadingMessage, loadingProgress } = useAuth();
+  const { loginStart, loginSuccess, loginFailure, loading, loadingMessage, loadingProgress, isInitialized } = useAuth();
   const [isClient, setIsClient] = useState(false);
   
   const {
@@ -21,7 +21,8 @@ const LoginModal = ({ isOpen, onClose , handleSignupClick }) => {
     defaultValues: {
       email: '',
       password: ''
-    }
+    },
+    mode: 'onChange'
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -92,7 +93,7 @@ const LoginModal = ({ isOpen, onClose , handleSignupClick }) => {
     setShowForgotPassword(false);
   };
 
-  if (!isClient || !isOpen) return null;
+  if (!isClient || !isInitialized || !isOpen) return null;
 
   return (
     <>

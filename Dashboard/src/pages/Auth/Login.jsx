@@ -18,25 +18,34 @@ const Login = ({ onSwitchToSignup }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { response, loading, error, ApiCall } = useCallpostApi({
-    url: "/api/user/Login",
-    method: "POST",
-    body: formData
-  });
+  const { response, loading, error, ApiCall } = useCallpostApi();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    await ApiCall();
+
+    await ApiCall({
+      url: "/api/user/Login",
+      method: "POST",
+      body: formData
+    });
   };
 
   useEffect(() => {
     if (response) {
+      console.log('Login response:', response);
+
+      // Token will be stored in Redux state
+      if (response.user && response.user.token) {
+        console.log('Token received:', response.user.token.substring(0, 20) + '...');
+      } else {
+        console.error('No token in response:', response);
+      }
+
       dispatch(addUser(response));
       toast.success("Login successful");
       setTimeout(() => {
         Navigate("/dashboard");
-      }, 100); 
+      }, 100);
     }
   }, [response, dispatch]);
 

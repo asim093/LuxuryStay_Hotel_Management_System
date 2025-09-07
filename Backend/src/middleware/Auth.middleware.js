@@ -5,26 +5,65 @@ dotenv.config();
 
 const authMiddleware = async (req, res, next) => {
   try {
-    const token = req.headers["authorization"]?.split(" ")[1];
+    const authHeader = req.headers["authorization"];
+    
+    if (!authHeader) {
+      return res
+        .status(401)
+        .json({ message: "No authorization header provided", status: "failed" });
+    }
+
+    if (!authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Invalid authorization header format", status: "failed" });
+    }
+
+    const token = authHeader.split(" ")[1];
 
     if (!token) {
       return res
         .status(401)
-        .json({ message: "No token provided, authorization denied" });
+        .json({ message: "No token provided, authorization denied", status: "failed" });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY || "defaultsecret");
+    // Verify the token
+    const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
+    const decoded = jwt.verify(token, jwtSecret);
+
+    if (!decoded || !decoded.user || !decoded.user.id) {
+      return res
+        .status(401)
+        .json({ message: "Invalid token payload", status: "failed" });
+    }
 
     req.user = decoded.user;
-
     next();
   } catch (error) {
     console.error("Authentication error:", error);
-    res.status(401).json({ message: "Token is not valid", status: "failed" });
+    
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        message: "Invalid token format", 
+        status: "failed",
+        error: "JWT_MALFORMED"
+      });
+    } else if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        message: "Token has expired", 
+        status: "failed",
+        error: "JWT_EXPIRED"
+      });
+    } else {
+      return res.status(401).json({ 
+        message: "Token verification failed", 
+        status: "failed",
+        error: "JWT_VERIFICATION_FAILED"
+      });
+    }
   }
 };
 
-// Role-based authorization middleware
 export const authorizeRoles = (...roles) => {
   return async (req, res, next) => {
     try {
@@ -56,7 +95,6 @@ export const authorizeRoles = (...roles) => {
   };
 };
 
-// Specific role middlewares
 export const requireAdmin = authorizeRoles('Admin');
 export const requireManager = authorizeRoles('Admin', 'Manager');
 export const requireReceptionist = authorizeRoles('Admin', 'Manager', 'Receptionist');

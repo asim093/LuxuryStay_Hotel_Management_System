@@ -11,7 +11,7 @@ const LoginModal = dynamic(() => import("../Login/Login"), { ssr: false });
 const SignupModal = dynamic(() => import("../Signup/Signup"), { ssr: false });
 
 export default function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isInitialized } = useAuth();
   const isClient = useClientSide();
   
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -130,7 +130,7 @@ export default function Navbar() {
                   <Link href={item.href} className="hover:bg-primary hover:text-primary-content transition-colors duration-200" prefetch={true} onClick={() => handleNavigation(item.href)}>{item.name}</Link>
                 </li>
               ))}
-              {isClient && !isAuthenticated && (
+              {isClient && isInitialized && !isAuthenticated && (
                 <>
                   <div className="divider"></div>
                   <li><button onClick={handleSignupClick} className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Sign Up</button></li>
@@ -141,7 +141,7 @@ export default function Navbar() {
           </div>
 
           {/* User Authentication Section */}
-          {!isClient ? (
+          {!isClient || !isInitialized ? (
             // Loading skeleton
             <div className="hidden lg:flex items-center space-x-2">
               <div className="w-20 h-8 bg-gray-200 rounded animate-pulse"></div>
@@ -177,14 +177,14 @@ export default function Navbar() {
                   </li>
                   <div className="divider my-1"></div>
                   <li>
-                    <Link className="justify-between hover:bg-primary hover:text-primary-content transition-colors duration-200">
+                    <Link href="/profile" className="justify-between hover:bg-primary hover:text-primary-content transition-colors duration-200">
                       Profile
                       <span className="badge badge-primary badge-sm">New</span>
                     </Link>
                   </li>
-                  <li><Link className="hover:bg-primary hover:text-primary-content transition-colors duration-200">My Bookings</Link></li>
-                  <li><Link className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Favorites</Link></li>
-                  <li><Link className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Settings</Link></li>
+                  <li><Link href="/bookings" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">My Bookings</Link></li>
+                  <li><Link href="/favorites" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Favorites</Link></li>
+                  <li><Link href="/settings" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Settings</Link></li>
                   <div className="divider my-1"></div>
                   <li>
                     <button onClick={handleLogout} className="text-error hover:bg-error hover:text-error-content transition-colors duration-200">

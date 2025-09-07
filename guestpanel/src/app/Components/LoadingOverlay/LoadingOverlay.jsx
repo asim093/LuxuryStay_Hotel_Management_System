@@ -3,10 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useClientSide } from '../../hooks/useClientSide';
 
 const LoadingOverlay = () => {
-  const { loading, loadingMessage, loadingProgress } = useAuth();
+  const { loading, loadingMessage, loadingProgress, isInitialized } = useAuth();
   const isClient = useClientSide();
 
-  if (!isClient || !loading) return null;
+  if (!isClient || !isInitialized || !loading) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">

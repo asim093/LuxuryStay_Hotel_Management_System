@@ -13,7 +13,7 @@ const AllUsers = () => {
 
   const token = useSelector((state) => state.user?.data?.user?.token || state.user?.token);
 
-  const validRoles = ['Admin', 'Manager', 'Receptionist', 'Housekeeping', 'Guest'];
+  const validRoles = ['Admin', 'Manager', 'Receptionist', "Staff", 'Housekeeping', 'Guest'];
 
   const isValidJWT = (token) => {
     if (!token) return false;
@@ -23,14 +23,14 @@ const AllUsers = () => {
 
   const getCleanToken = () => {
     if (!token) return null;
-    
+
     const cleanToken = token.replace(/^Bearer\s+/i, '').trim();
-    
+
     if (!isValidJWT(cleanToken)) {
       console.error('Invalid JWT format:', cleanToken);
       return null;
     }
-    
+
     return cleanToken;
   };
 
@@ -38,19 +38,18 @@ const AllUsers = () => {
     const toast = document.createElement('div');
     toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-300 translate-x-full';
     toast.innerHTML = `
-      <div class="flex items-center bg-white shadow-lg rounded-lg p-4 border-l-4 ${
-        type === 'success' ? 'border-green-500' : 'border-red-500'
+      <div class="flex items-center bg-white shadow-lg rounded-lg p-4 border-l-4 ${type === 'success' ? 'border-green-500' : 'border-red-500'
       }">
         <div class="flex-shrink-0 mr-3">
-          ${type === 'success' 
-            ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
-            : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
-          }
+          ${type === 'success'
+        ? '<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>'
+        : '<svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>'
+      }
         </div>
         <div class="text-sm font-medium text-gray-800">${message}</div>
       </div>
     `;
-    
+
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.remove('translate-x-full'), 100);
     setTimeout(() => {
@@ -61,7 +60,7 @@ const AllUsers = () => {
 
   const fetchUsers = useCallback(async () => {
     const cleanToken = getCleanToken();
-    
+
     if (!cleanToken) {
       setError('Invalid authentication token. Please login again.');
       setLoading(false);
@@ -76,15 +75,15 @@ const AllUsers = () => {
           'Content-Type': 'application/json',
         },
       });
-      
+
       if (response.status === 401) {
         setError('Session expired. Please login again.');
         setLoading(false);
         return;
       }
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setUsers(data.users || []);
         setError('');
@@ -101,7 +100,7 @@ const AllUsers = () => {
 
   const updateUserRole = useCallback(async (userId, newRole) => {
     const cleanToken = getCleanToken();
-    
+
     if (!cleanToken) {
       showToast('Invalid authentication token. Please login again.', 'error');
       return;
@@ -126,8 +125,8 @@ const AllUsers = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setUsers(prevUsers => 
-          prevUsers.map(user => 
+        setUsers(prevUsers =>
+          prevUsers.map(user =>
             user._id === userId ? { ...user, role: newRole } : user
           )
         );
@@ -150,19 +149,19 @@ const AllUsers = () => {
   // Memoized filtered and sorted users
   const filteredUsers = useMemo(() => {
     let filtered = users.filter(user => {
-      const matchesSearch = 
+      const matchesSearch =
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+
       const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-      
+
       return matchesSearch && matchesRole;
     });
 
     filtered.sort((a, b) => {
       let aVal = a[sortBy] || '';
       let bVal = b[sortBy] || '';
-      
+
       if (sortBy === 'createdAt') {
         aVal = new Date(aVal);
         bVal = new Date(bVal);
@@ -170,7 +169,7 @@ const AllUsers = () => {
         aVal = aVal.toString().toLowerCase();
         bVal = bVal.toString().toLowerCase();
       }
-      
+
       const comparison = aVal > bVal ? 1 : -1;
       return sortOrder === 'asc' ? comparison : -comparison;
     });
@@ -192,6 +191,7 @@ const AllUsers = () => {
       'Manager': 'bg-blue-100 text-blue-800 border-blue-200',
       'Receptionist': 'bg-green-100 text-green-800 border-green-200',
       'Housekeeping': 'bg-purple-100 text-purple-800 border-purple-200',
+      'Staff': 'bg-purple-200 text-purple-500 border-purple-500',
       'Guest': 'bg-gray-100 text-gray-800 border-gray-200'
     };
     return colors[role] || 'bg-gray-100 text-gray-800 border-gray-200';
@@ -209,7 +209,7 @@ const AllUsers = () => {
             <p className="mt-2 text-gray-600">
               {!token ? 'Please log in to access the user management panel.' : 'Invalid authentication token. Please log in again.'}
             </p>
-            <button 
+            <button
               className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
               onClick={() => window.location.href = '/login'}
             >
@@ -286,7 +286,7 @@ const AllUsers = () => {
                   />
                 </div>
               </div>
-              
+
               <select
                 className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 value={selectedRole}
@@ -315,7 +315,7 @@ const AllUsers = () => {
                 <option value="createdAt-asc">Oldest First</option>
               </select>
             </div>
-            
+
             <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
               <span className="text-sm text-gray-700">
                 Showing {filteredUsers.length} of {users.length} users
@@ -392,8 +392,8 @@ const AllUsers = () => {
                       </svg>
                       <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        {searchTerm || selectedRole !== 'all' 
-                          ? 'Try adjusting your search filters' 
+                        {searchTerm || selectedRole !== 'all'
+                          ? 'Try adjusting your search filters'
                           : 'Get started by adding a new user'
                         }
                       </p>

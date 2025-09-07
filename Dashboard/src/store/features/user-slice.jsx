@@ -4,7 +4,7 @@ const initialState = {
   data: {},
   isLogin: false,
   email: "",
-  
+  token: null,
 };
 
 export const userSlice = createSlice({
@@ -14,10 +14,15 @@ export const userSlice = createSlice({
     addUser: (state, action) => {
       state.data = action.payload;
       state.isLogin = true;
+      // Store token in Redux state
+      if (action.payload.user && action.payload.user.token) {
+        state.token = action.payload.user.token;
+      }
     },
     removeUser: (state) => {
       state.data = {};
       state.isLogin = false;
+      state.token = null;
     },
     AddData: (state, action) => {
       state.data = action.payload;

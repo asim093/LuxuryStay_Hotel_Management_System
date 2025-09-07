@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import userroutes from "./src/routes/UserRoutes.js";
+import roomRoutes from "./src/routes/RoomRoutes.js";
+import bookingRoutes from "./src/routes/BookingRoutes.js";
 import connectDb from "./src/db/index.js";
 import cors from "cors";
 
@@ -14,7 +16,15 @@ app.use(cors({
 
 app.use(express.json());
 
+// API Routes
 app.use("/api/user", userroutes);
+app.use("/api/rooms", roomRoutes);
+app.use("/api/bookings", bookingRoutes);
+
+// Test endpoint
+app.get("/api/test", (req, res) => {
+  res.json({ message: "API is working!", timestamp: new Date().toISOString() });
+});
 
 connectDb()
   .then(() => {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link, href, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -19,45 +19,60 @@ import {
   Shield,
   User2
 } from 'lucide-react';
-import { removeUser } from '../../store/features/user-slice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
+import { removeUser } from '../../store/features/user-slice';
 
 const DashboardLayout = ({ children, onLogout }) => {
   const user = useSelector((state) => state.user.data.user);
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState({});
   const location = useLocation();
 
   const navigation = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
-    {name:"All Users" , icon:User2 , href:'/allUsers'},
-    { name: 'Staff Management', icon: Users, href: '/staff' },
+    { name: 'Users', icon: User2, href: '/allUsers' }, // guests
+    {
+      name: 'Staff Management',
+      icon: Users,
+      subMenu: [
+        { name: 'All Staff', href: '/staff' },
+        { name: 'Managers', href: '/manager' },
+        { name: 'Receptionists', href: '/receptionist' },
+        { name: 'Housekeeping', href: '/housekeeping' },
+        { name: 'Maintenance', href: '/maintenance' },
+      ],
+    },
     { name: 'Room Management', icon: Hotel, href: '/rooms' },
     { name: 'Reservations', icon: Calendar, href: '/reservations' },
     { name: 'Billing', icon: CreditCard, href: '/billing' },
     { name: 'Reports', icon: BarChart3, href: '/reports' },
-    { name: 'Settings', icon: Settings, href: '/settings' }
+    { name: 'Settings', icon: Settings, href: '/settings' },
   ];
 
   const handleLogout = () => {
-    toast.success("Logout successful");
-
+    toast.success('Logout successful');
     setTimeout(() => {
       dispatch(removeUser());
       onLogout();
     }, 1500);
   };
 
-  const isActiveRoute = (href) => {
-    return location.pathname === href;
+  const isActiveRoute = (href) => location.pathname === href;
+
+  const toggleSubmenu = (name) => {
+    setSubmenuOpen((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}>
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0`}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -73,30 +88,75 @@ const DashboardLayout = ({ children, onLogout }) => {
           </button>
         </div>
 
+        {/* Navigation */}
         <nav className="mt-6 px-3">
           <div className="space-y-1">
             {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${isActiveRoute(item.href)
-                  ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-              >
-                <item.icon size={20} className="mr-3" />
-                {item.name}
-              </Link>
+              <div key={item.name}>
+                {/* Main Menu Item */}
+                {!item.subMenu ? (
+                  <Link
+                    to={item.href}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${isActiveRoute(item.href)
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                  >
+                    <item.icon size={20} className="mr-3" />
+                    {item.name}
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => toggleSubmenu(item.name)}
+                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${isActiveRoute(item.href)
+                        ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                  >
+                    <item.icon size={20} className="mr-3" />
+                    {item.name}
+                    <ChevronDown
+                      size={16}
+                      className={`ml-auto transition-transform duration-200 ${submenuOpen[item.name] ? 'rotate-180' : ''
+                        }`}
+                    />
+                  </button>
+                )}
+
+                {/* Sub-menu */}
+                {item.subMenu && submenuOpen[item.name] && (
+                  <div className="pl-8 mt-1 space-y-1">
+                    {item.subMenu.map((sub) => (
+                      <Link
+                        key={sub.name}
+                        to={sub.href}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`block px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${isActiveRoute(sub.href)
+                            ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
+                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                          }`}
+                      >
+                        {sub.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
         </nav>
 
-        {/* User Profile Section */}
+
+        {/* User Profile */}
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <img src={user?.profileImage} alt="User" className="w-10 h-10 rounded-full" />
+              <img
+                src={user?.profileImage}
+                alt="User"
+                className="w-10 h-10 rounded-full"
+              />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
@@ -131,7 +191,10 @@ const DashboardLayout = ({ children, onLogout }) => {
 
             <div className="flex items-center justify-between w-full space-x-4">
               <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search
+                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <input
                   type="text"
                   placeholder="Search..."
@@ -139,14 +202,14 @@ const DashboardLayout = ({ children, onLogout }) => {
                 />
               </div>
 
-
-              <div className='flex items-center space-x-4'>
+              <div className="flex items-center space-x-4">
                 <button className="p-2 text-gray-400 hover:text-gray-600 relative">
                   <Bell size={20} />
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
-                <div className="relative">
 
+                {/* Profile Dropdown */}
+                <div className="relative">
                   <button
                     onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                     className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
@@ -160,7 +223,6 @@ const DashboardLayout = ({ children, onLogout }) => {
                     <ChevronDown size={16} className="text-gray-400" />
                   </button>
 
-                  {/* Dropdown Menu */}
                   {profileDropdownOpen && (
                     <>
                       <div
@@ -226,9 +288,7 @@ const DashboardLayout = ({ children, onLogout }) => {
         </div>
 
         {/* Page Content */}
-        <main className="p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
 
       {/* Mobile Overlay */}
