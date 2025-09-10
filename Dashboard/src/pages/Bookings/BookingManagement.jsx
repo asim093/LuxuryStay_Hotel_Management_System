@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import {
-  Plus,
-  Search,
-  Filter,
-  Edit,
-  Eye,
-  CheckCircle,
-  XCircle,
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Edit, 
+  Eye, 
+  CheckCircle, 
+  XCircle, 
   Clock,
   User,
   Bed,
@@ -120,7 +120,7 @@ const BookingManagement = () => {
       const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
+      
       if (bookingsResponse.ok) {
         const bookingsData = await bookingsResponse.json();
         console.log('Bookings fetched:', bookingsData.bookings?.length || 0);
@@ -134,7 +134,7 @@ const BookingManagement = () => {
       const roomsResponse = await fetch('http://localhost:3001/api/rooms', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
+      
       if (roomsResponse.ok) {
         const roomsData = await roomsResponse.json();
         console.log('Rooms fetched:', roomsData.rooms?.length || 0);
@@ -145,7 +145,7 @@ const BookingManagement = () => {
       const usersResponse = await fetch('http://localhost:3001/api/user/users/Guest', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
+      
       if (usersResponse.ok) {
         const usersData = await usersResponse.json();
         console.log('Guests fetched:', usersData.users?.length || 0);
@@ -176,7 +176,7 @@ const BookingManagement = () => {
       const url = modal.mode === 'edit' && modal.data
         ? `http://localhost:3001/api/bookings/${modal.data._id}`
         : 'http://localhost:3001/api/bookings';
-
+      
       const method = modal.mode === 'edit' ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -295,22 +295,22 @@ const BookingManagement = () => {
   // Filter bookings
   const filteredBookings = useMemo(() => {
     return bookings.filter(booking => {
-      const matchesSearch = !filters.search ||
+    const matchesSearch = !filters.search || 
         booking.bookingNumber?.toLowerCase().includes(filters.search.toLowerCase()) ||
         booking.guest?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
         booking.room?.roomNumber?.toLowerCase().includes(filters.search.toLowerCase());
+    
+    const matchesStatus = !filters.status || booking.status === filters.status;
+    const matchesPaymentStatus = !filters.paymentStatus || booking.paymentStatus === filters.paymentStatus;
+    
+    const matchesCheckIn = !filters.checkInDate || 
+      new Date(booking.checkInDate).toISOString().split('T')[0] === filters.checkInDate;
+    
+    const matchesCheckOut = !filters.checkOutDate || 
+      new Date(booking.checkOutDate).toISOString().split('T')[0] === filters.checkOutDate;
 
-      const matchesStatus = !filters.status || booking.status === filters.status;
-      const matchesPaymentStatus = !filters.paymentStatus || booking.paymentStatus === filters.paymentStatus;
-
-      const matchesCheckIn = !filters.checkInDate ||
-        new Date(booking.checkInDate).toISOString().split('T')[0] === filters.checkInDate;
-
-      const matchesCheckOut = !filters.checkOutDate ||
-        new Date(booking.checkOutDate).toISOString().split('T')[0] === filters.checkOutDate;
-
-      return matchesSearch && matchesStatus && matchesPaymentStatus && matchesCheckIn && matchesCheckOut;
-    });
+    return matchesSearch && matchesStatus && matchesPaymentStatus && matchesCheckIn && matchesCheckOut;
+  });
   }, [bookings, filters]);
 
   // Sort bookings
@@ -396,13 +396,13 @@ const BookingManagement = () => {
                 <div className="p-2 bg-indigo-100 rounded-lg">
                   <Calendar className="h-8 w-8 text-indigo-600" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Booking Management</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Booking Management</h1>
               </div>
               <p className="text-gray-600">Manage guest reservations, check-ins, and check-outs efficiently</p>
-            </div>
+        </div>
             <div className="flex-shrink-0">
-              <button
-                onClick={() => {
+        <button
+          onClick={() => {
                   openModal('add');
                 }}
                 className="inline-flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
@@ -415,11 +415,11 @@ const BookingManagement = () => {
                   </>
                 ) : (
                   <>
-                    <Plus size={20} />
-                    New Booking
+          <Plus size={20} />
+          New Booking
                   </>
                 )}
-              </button>
+        </button>
             </div>
           </div>
         </div>
@@ -504,74 +504,74 @@ const BookingManagement = () => {
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Bookings</h2>
             <p className="text-sm text-gray-600">Use filters to find specific bookings quickly</p>
-          </div>
+      </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
             <div className="col-span-1 sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-              <div className="relative">
+            <div className="relative">
                 <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search bookings..."
+              <input
+                type="text"
+                placeholder="Search bookings..."
                   className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                  value={filters.search}
-                  onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                />
-              </div>
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              />
             </div>
+          </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-              <select
+            <select
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                value={filters.status}
-                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-              >
-                <option value="">All Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Confirmed">Confirmed</option>
-                <option value="Checked In">Checked In</option>
-                <option value="Checked Out">Checked Out</option>
-                <option value="Cancelled">Cancelled</option>
-                <option value="No Show">No Show</option>
-              </select>
-            </div>
+              value={filters.status}
+              onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+            >
+              <option value="">All Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Checked In">Checked In</option>
+              <option value="Checked Out">Checked Out</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="No Show">No Show</option>
+            </select>
+          </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
-              <select
+            <select
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                value={filters.paymentStatus}
-                onChange={(e) => setFilters(prev => ({ ...prev, paymentStatus: e.target.value }))}
-              >
-                <option value="">All Payment Status</option>
-                <option value="Pending">Pending</option>
-                <option value="Paid">Paid</option>
-                <option value="Partially Paid">Partially Paid</option>
-                <option value="Refunded">Refunded</option>
-              </select>
-            </div>
+              value={filters.paymentStatus}
+              onChange={(e) => setFilters(prev => ({ ...prev, paymentStatus: e.target.value }))}
+            >
+              <option value="">All Payment Status</option>
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+              <option value="Partially Paid">Partially Paid</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+          </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Check-in Date</label>
-              <input
-                type="date"
+            <input
+              type="date"
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                value={filters.checkInDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, checkInDate: e.target.value }))}
-              />
-            </div>
+              value={filters.checkInDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, checkInDate: e.target.value }))}
+            />
+          </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Check-out Date</label>
-              <input
-                type="date"
+            <input
+              type="date"
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
-                value={filters.checkOutDate}
-                onChange={(e) => setFilters(prev => ({ ...prev, checkOutDate: e.target.value }))}
-              />
-            </div>
+              value={filters.checkOutDate}
+              onChange={(e) => setFilters(prev => ({ ...prev, checkOutDate: e.target.value }))}
+            />
+          </div>
 
             <div className="flex items-end">
               <button
@@ -580,12 +580,12 @@ const BookingManagement = () => {
               >
                 Clear Filters
               </button>
-            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bookings Table */}
-        {loading ? (
+      {/* Bookings Table */}
+      {loading ? (
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-4"></div>
@@ -609,8 +609,8 @@ const BookingManagement = () => {
               <Plus size={16} />
               New Booking
             </button>
-          </div>
-        ) : (
+        </div>
+      ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             {/* Table Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -623,7 +623,7 @@ const BookingManagement = () => {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto">
               <table className="min-w-full table-fixed divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -710,8 +710,8 @@ const BookingManagement = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
                     </th>
-                  </tr>
-                </thead>
+                </tr>
+              </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedBookings.map((booking) => {
                     const statusInfo = statusConfig[booking.status];
@@ -724,9 +724,9 @@ const BookingManagement = () => {
                       <tr key={booking._id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm font-mono font-semibold text-gray-900">
-                            {booking.bookingNumber}
-                          </div>
-                        </td>
+                        {booking.bookingNumber}
+                      </div>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
@@ -744,85 +744,85 @@ const BookingManagement = () => {
                                 {booking.guest?.email}
                               </div>
                             </div>
-                          </div>
-                        </td>
+                      </div>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="text-sm text-gray-900">
-                            <div className="font-medium">Room {booking.room?.roomNumber}</div>
+                        <div className="font-medium">Room {booking.room?.roomNumber}</div>
                             <div className="text-gray-500">{booking.room?.roomType}</div>
-                          </div>
-                        </td>
+                      </div>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {booking.checkInDate ? new Date(booking.checkInDate).toLocaleDateString() : 'N/A'}
-                        </td>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {booking.checkOutDate ? new Date(booking.checkOutDate).toLocaleDateString() : 'N/A'}
-                        </td>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                             {nights} day{nights !== 1 ? 's' : ''}
                           </span>
-                        </td>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
                             <User size={16} className="text-gray-400 mr-2" />
-                            {booking.numberOfGuests}
-                          </div>
-                        </td>
+                        {booking.numberOfGuests}
+                      </div>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
                           <div className="max-w-[120px] overflow-hidden text-ellipsis truncate">Rs:{booking.totalAmount?.toLocaleString() || '0'}</div>
-                        </td>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusInfo?.color || 'bg-gray-100 text-gray-800'}`}>
                             <StatusIcon size={12} />
-                            {booking.status}
-                          </span>
-                        </td>
+                        {booking.status}
+                      </span>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border ${paymentInfo?.color || 'bg-gray-100 text-gray-800'}`}>
                             <PaymentIcon size={12} />
-                            {booking.paymentStatus}
-                          </span>
-                        </td>
+                        {booking.paymentStatus}
+                      </span>
+                    </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleEdit(booking)}
+                        <button
+                          onClick={() => handleEdit(booking)}
                               className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 p-1 rounded"
-                              title="Edit"
-                            >
-                              <Edit size={16} />
-                            </button>
-
-                            {booking.status === 'Confirmed' && (
-                              <button
-                                onClick={() => handleStatusUpdate(booking._id, 'checkin')}
+                          title="Edit"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        
+                        {booking.status === 'Confirmed' && (
+                          <button
+                            onClick={() => handleStatusUpdate(booking._id, 'checkin')}
                                 className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1 rounded"
-                                title="Check In"
-                              >
-                                <CheckCircle size={16} />
-                              </button>
-                            )}
-
-                            {booking.status === 'Checked In' && (
-                              <button
-                                onClick={() => handleStatusUpdate(booking._id, 'checkout')}
+                            title="Check In"
+                          >
+                            <CheckCircle size={16} />
+                          </button>
+                        )}
+                        
+                        {booking.status === 'Checked In' && (
+                          <button
+                            onClick={() => handleStatusUpdate(booking._id, 'checkout')}
                                 className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 p-1 rounded"
-                                title="Check Out"
-                              >
-                                <XCircle size={16} />
-                              </button>
-                            )}
-
-                            {!['Checked Out', 'Cancelled'].includes(booking.status) && (
-                              <button
-                                onClick={() => handleStatusUpdate(booking._id, 'cancel')}
+                            title="Check Out"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
+                        
+                        {!['Checked Out', 'Cancelled'].includes(booking.status) && (
+                          <button
+                            onClick={() => handleStatusUpdate(booking._id, 'cancel')}
                                 className="text-red-600 hover:text-red-900 hover:bg-red-50 p-1 rounded"
-                                title="Cancel"
-                              >
-                                <XCircle size={16} />
-                              </button>
-                            )}
+                            title="Cancel"
+                          >
+                            <XCircle size={16} />
+                          </button>
+                        )}
 
                             <button
                               onClick={() => handleDeleteReservation(booking._id)}
@@ -831,14 +831,14 @@ const BookingManagement = () => {
                             >
                               <Trash2 size={16} />
                             </button>
-                          </div>
-                        </td>
-                      </tr>
+                      </div>
+                    </td>
+                  </tr>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+              </tbody>
+            </table>
+          </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -846,7 +846,7 @@ const BookingManagement = () => {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
                     Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, sortedBookings.length)} of {sortedBookings.length} results
-                  </div>
+                </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
@@ -882,19 +882,19 @@ const BookingManagement = () => {
                           </button>
                         );
                       })}
-                    </div>
+              </div>
 
-                    <button
+                <button
                       onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                       disabled={currentPage === totalPages}
                       className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Next
-                    </button>
-                  </div>
-                </div>
+                </button>
               </div>
-            )}
+          </div>
+        </div>
+      )}
           </div>
         )}
 

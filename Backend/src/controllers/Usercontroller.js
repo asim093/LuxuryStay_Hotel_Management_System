@@ -381,7 +381,11 @@ export const forgotPassword = async (req, res) => {
     const mailResponse = await sendMail({
       email: [email],
       subject: "OTP Verification Code",
-      htmlTemplate: `<h1>OTP: ${otp}</h1>`,
+      templateName: "forgot_password",
+      templateVariables: {
+        otp: otp.toString(),
+        userName:user.name
+      }
     });
 
     if (!mailResponse) {

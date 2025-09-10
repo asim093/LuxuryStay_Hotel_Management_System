@@ -17,7 +17,7 @@ const createAdminUser = async () => {
       name: "System Administrator",
       email: "admin@luxurystay.com",
       password: await bcrypt.hash("admin123", 10),
-      profileImage: "default-admin-avatar.jpg", // You can update this with actual image path
+      profileImage: "default-admin-avatar.jpg", 
       role: "Admin",
       isActive: true
     };

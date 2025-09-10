@@ -15,7 +15,6 @@ import {
   Calendar,
   CreditCard,
   BarChart3,
-  Settings
 } from 'lucide-react';
 import { removeUser } from './store/features/user-slice';
 import { toast, ToastContainer } from 'react-toastify';
@@ -25,6 +24,8 @@ import Managers from './pages/Managers/Managers';
 import HouseKeeping from './pages/HouseKeeping/HouseKeeping';
 import Receptionist from './pages/Receptionist/Receptionist';
 import Maintenance from './pages/Maintenance/Maintenance';
+import BillingManagement from './pages/Billing/BillingManagement.jsx';
+import Settings from './pages/Settings/Settings.jsx';
 
 function App() {
   const dispatch = useDispatch();
@@ -133,6 +134,26 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <BillingManagement />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <Settings />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/staff"
@@ -165,78 +186,18 @@ function App() {
           }
         />
         <Route
-          path="/billing"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule
-                  title="Billing & Payments"
-                  description="Manage invoices, payments, and financial transactions"
-                  icon={CreditCard}
-                  features={[
-                    'Invoice generation',
-                    'Payment processing',
-                    'Financial reporting',
-                    'Tax calculations',
-                    'Refund management',
-                    'Payment gateway integration'
-                  ]}
-                />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/reports"
           element={
             <ProtectedRoute>
               <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule
-                  title="Reports & Analytics"
-                  description="Generate comprehensive reports and analyze hotel performance metrics"
-                  icon={BarChart3}
-                  features={[
-                    'Occupancy reports',
-                    'Revenue analytics',
-                    'Guest satisfaction metrics',
-                    'Staff performance reports',
-                    'Financial summaries',
-                    'Custom report builder'
-                  ]}
-                />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/settings"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule
-                  title="System Settings"
-                  description="Configure hotel settings, user preferences, and system parameters"
-                  icon={Settings}
-                  features={[
-                    'Hotel information setup',
-                    'User account management',
-                    'System preferences',
-                    'Notification settings',
-                    'Security configurations',
-                    'Backup and restore'
-                  ]}
-                />
-              </DashboardLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Default redirect */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
 
-      {/* Toast Container - Puri app ke liye ek hi */}
       <ToastContainer
         position="top-right"
         autoClose={3000}

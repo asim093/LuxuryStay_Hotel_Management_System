@@ -44,37 +44,37 @@ const HouseKeeping = () => {
 
   // Separate API hooks for each operation
   const { response: getResponse, loading: getLoading, error: getError, Apicall: getApiCall } = useCallgetApi();
-
+  
   // Add operation hook
-  const {
-    response: addResponse,
-    loading: addLoading,
-    error: addError,
-    ApiCall: addApiCall
+  const { 
+    response: addResponse, 
+    loading: addLoading, 
+    error: addError, 
+    ApiCall: addApiCall 
   } = useCallpostApi();
-
+  
   // Edit operation hook
-  const {
-    response: editResponse,
-    loading: editLoading,
-    error: editError,
-    ApiCall: editApiCall
+  const { 
+    response: editResponse, 
+    loading: editLoading, 
+    error: editError, 
+    ApiCall: editApiCall 
   } = useCallpostApi();
-
+  
   // Delete operation hook
-  const {
-    response: deleteResponse,
-    loading: deleteLoading,
-    error: deleteError,
-    ApiCall: deleteApiCall
+  const { 
+    response: deleteResponse, 
+    loading: deleteLoading, 
+    error: deleteError, 
+    ApiCall: deleteApiCall 
   } = useCallpostApi();
-
+  
   // Status toggle hook
-  const {
-    response: statusResponse,
-    loading: statusLoading,
-    error: statusError,
-    ApiCall: statusApiCall
+  const { 
+    response: statusResponse, 
+    loading: statusLoading, 
+    error: statusError, 
+    ApiCall: statusApiCall 
   } = useCallpostApi();
 
   const statuses = [
@@ -532,7 +532,7 @@ const HouseKeeping = () => {
                 <p className="text-gray-600 mb-6">Get started by adding your first housekeeping staff member.</p>
                 <button
                   onClick={() => {
-
+                   
                     openModal('add');
                   }}
                   className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors gap-2 cursor-pointer"

@@ -63,7 +63,6 @@ const BookingSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Generate booking number before saving
 BookingSchema.pre('save', async function(next) {
   if (!this.bookingNumber) {
     const count = await mongoose.model('Booking').countDocuments();
