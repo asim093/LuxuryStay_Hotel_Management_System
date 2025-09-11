@@ -30,10 +30,11 @@ import Settings from './pages/Settings/Settings.jsx';
 function App() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.user.isLogin);
+  const role = useSelector((state) => state?.user?.data?.user?.role);
 
   useEffect(() => {
-    // Initialize sample data
     initializeSampleData();
+    console.log("role", role);
 
     // Check for existing token on app startup
     const token = localStorage.getItem('token');
@@ -48,8 +49,57 @@ function App() {
     dispatch(removeUser());
   };
 
-  // Protected Route Component
-  const ProtectedRoute = ({ children }) => {
+  // Role-based access control configuration
+  const rolePermissions = {
+    Admin: [
+      '/dashboard', '/allUsers', '/manager', '/housekeeping', 
+      '/receptionist', '/maintenance', '/billing', '/settings',
+      '/staff', '/rooms', '/reservations', '/reports'
+    ],
+    Manager: [
+      '/dashboard', '/staff', '/rooms', '/reservations', 
+      '/billing', '/reports', '/settings'
+    ],
+    Staff: [
+      '/dashboard', '/rooms', '/reservations'
+    ],
+    Receptionist: [
+      '/dashboard', '/rooms', '/reservations', '/billing'
+    ],
+    Maintenance: [
+      '/dashboard', '/rooms', '/maintenance'
+    ],
+    Housekeeping: [
+      '/dashboard', '/rooms', '/housekeeping'
+    ]
+  };
+
+  // Check if user has access to a specific route
+  const hasAccess = (path) => {
+    if (!role) return false;
+    if (role === 'Guest') return false; // Guest role excluded
+    
+    const allowedPaths = rolePermissions[role] || [];
+    return allowedPaths.includes(path);
+  };
+
+  // Protected Route Component with role-based access
+  const ProtectedRoute = ({ children, requiredPath }) => {
+    if (!isAuthenticated) {
+      return <Navigate to="/login" replace />;
+    }
+
+    if (!hasAccess(requiredPath)) {
+      // Redirect to dashboard if no access, or show unauthorized message
+      toast.error('You do not have permission to access this page');
+      return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+  };
+
+  // Simple Protected Route for basic authentication check
+  const BasicProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
   };
 
@@ -74,20 +124,23 @@ function App() {
           }
         />
 
+        {/* Dashboard - accessible to all authenticated users except Guest */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute>
+            <BasicProtectedRoute>
               <DashboardLayout onLogout={handleLogout}>
                 <DashboardHome />
               </DashboardLayout>
-            </ProtectedRoute>
+            </BasicProtectedRoute>
           }
         />
+
+        {/* Admin-only routes */}
         <Route
           path="/allUsers"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/allUsers">
               <DashboardLayout onLogout={handleLogout}>
                 <AllUsers />
               </DashboardLayout>
@@ -97,17 +150,19 @@ function App() {
         <Route
           path="/manager"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/manager">
               <DashboardLayout onLogout={handleLogout}>
                 <Managers />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Role-specific management pages */}
         <Route
           path="/housekeeping"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/housekeeping">
               <DashboardLayout onLogout={handleLogout}>
                 <HouseKeeping />
               </DashboardLayout>
@@ -117,7 +172,7 @@ function App() {
         <Route
           path="/receptionist"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/receptionist">
               <DashboardLayout onLogout={handleLogout}>
                 <Receptionist />
               </DashboardLayout>
@@ -127,27 +182,31 @@ function App() {
         <Route
           path="/maintenance"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/maintenance">
               <DashboardLayout onLogout={handleLogout}>
                 <Maintenance />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Billing - accessible to Admin, Manager, Receptionist */}
         <Route
           path="/billing"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/billing">
               <DashboardLayout onLogout={handleLogout}>
                 <BillingManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Settings - accessible to Admin and Manager */}
         <Route
           path="/settings"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/settings">
               <DashboardLayout onLogout={handleLogout}>
                 <Settings />
               </DashboardLayout>
@@ -155,45 +214,54 @@ function App() {
           }
         />
 
+        {/* Staff Management - accessible to Admin and Manager */}
         <Route
           path="/staff"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/staff">
               <DashboardLayout onLogout={handleLogout}>
                 <StaffManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Room Management - accessible to most roles */}
         <Route
           path="/rooms"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/rooms">
               <DashboardLayout onLogout={handleLogout}>
                 <RoomManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Reservations - accessible to most roles */}
         <Route
           path="/reservations"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/reservations">
               <DashboardLayout onLogout={handleLogout}>
                 <BookingManagement />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
+        {/* Reports - accessible to Admin and Manager */}
         <Route
           path="/reports"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPath="/reports">
               <DashboardLayout onLogout={handleLogout}>
+                <PlaceholderModule title="Reports" />
               </DashboardLayout>
             </ProtectedRoute>
           }
         />
+
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

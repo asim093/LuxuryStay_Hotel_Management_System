@@ -7,7 +7,7 @@ const Userschema = new mongoose.Schema({
   profileImage: { type: String, default:""},
   role: {
     type: String,
-    enum: ['Admin', 'Manager', "Staff", 'Receptionist', 'Maintenance' , 'Housekeeping', 'Guest'],
+    enum: ['Admin', 'Manager', 'Receptionist', 'Maintenance' , 'Housekeeping', 'Guest'],
     default: 'Guest'
   },
   isActive: { type: Boolean, default: true },
