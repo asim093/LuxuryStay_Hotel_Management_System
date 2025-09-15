@@ -1,21 +1,185 @@
 "use client"
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, Search } from 'lucide-react';
+import { BedDouble, Calendar, MapPin, Search, Users2 } from 'lucide-react';
 import HotelCard from './Components/Cards/HotelCard';
 import OfferCard from './Components/Cards/OfferCard';
 import TestimonialCard from './Components/Cards/TestimonialCard';
 
+// Add toast notification if not available
+const toast = {
+  error: (message) => {
+    console.error(message);
+    alert(`Error: ${message}`);
+  },
+  success: (message) => {
+    console.log(message);
+    alert(`Success: ${message}`);
+  }
+};
+
 export default function HomePage() {
-  const [searchData, setSearchData] = useState({
-    destination: '',
-    checkIn: '',
-    checkOut: '',
-    guests: 1
+  const [rooms, setRooms] = useState([]);
+  const [userid, setuserid] = useState("");
+  const [token, settoken] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    guest: "",
+    room: "",
+    checkInDate: "",
+    checkOutDate: "",
+    numberOfGuests: 1,
   });
 
-  const [currentSlide, setCurrentSlide] = useState(0);
+  // Initialize auth state and fetch rooms
+  useEffect(() => {
+    const initializeAuth = () => {
+      try {
+        const loginState = JSON.parse(localStorage.getItem("authState"));
+        if (loginState && loginState.user && loginState.token) {
+          setuserid(loginState.user.id);
+          settoken(loginState.token);
 
-  // Carousel data with different destinations
+          // Update formData with userid
+          setFormData(prev => ({
+            ...prev,
+            guest: loginState.user.id
+          }));
+
+          console.log("Login state:", loginState);
+        } else {
+          console.warn("No valid auth state found");
+          toast.error("Please log in to access this page");
+        }
+      } catch (error) {
+        console.error("Error parsing auth state:", error);
+        toast.error("Authentication error. Please log in again.");
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  // Fetch rooms when token is available
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchRooms = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("http://localhost:3001/api/rooms", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (data.rooms && Array.isArray(data.rooms)) {
+          setRooms(data.rooms);
+        } else {
+          throw new Error("Invalid rooms data received");
+        }
+      } catch (err) {
+        console.error("Error fetching rooms:", err);
+        toast.error(err.message || "Failed to fetch rooms");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [token]);
+
+  const handleChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const validateForm = () => {
+    if (!formData.room) {
+      toast.error("Please select a room");
+      return false;
+    }
+    if (!formData.checkInDate) {
+      toast.error("Please select check-in date");
+      return false;
+    }
+    if (!formData.checkOutDate) {
+      toast.error("Please select check-out date");
+      return false;
+    }
+
+    const checkIn = new Date(formData.checkInDate);
+    const checkOut = new Date(formData.checkOutDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (checkIn < today) {
+      toast.error("Check-in date cannot be in the past");
+      return false;
+    }
+    if (checkOut <= checkIn) {
+      toast.error("Check-out date must be after check-in date");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+    if (!token) {
+      toast.error("Please log in to make a booking");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("http://localhost:3001/api/bookings", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Booking successful!");
+        console.log("Booking:", data);
+        // Reset form
+        setFormData({
+          guest: userid,
+          room: "",
+          checkInDate: "",
+          checkOutDate: "",
+          numberOfGuests: 1,
+        });
+      } else {
+        throw new Error(data.message || "Booking failed");
+      }
+    } catch (error) {
+      console.error("Booking error:", error);
+      toast.error(error.message || "Failed to create booking");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const slides = [
     {
       image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2080&q=80",
@@ -132,17 +296,6 @@ export default function HomePage() {
     }
   ];
 
-  const handleInputChange = (field, value) => {
-    setSearchData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleSearch = () => {
-    console.log('Search data:', searchData);
-  };
-
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
   };
@@ -151,14 +304,24 @@ export default function HomePage() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
-  // Auto-advance slides
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, []); // Empty dependency array
+  }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -167,15 +330,14 @@ export default function HomePage() {
         {slides.map((slide, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentSlide ? 'opacity-100' : 'opacity-0'
+              }`}
           >
             <img
               src={slide.image}
               alt={slide.title}
               className="w-full h-full object-cover"
-              style={{ 
+              style={{
                 objectPosition: 'center',
                 maxWidth: '100vw',
                 maxHeight: '100vh'
@@ -196,11 +358,10 @@ export default function HomePage() {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all duration-300 ${
-              index === currentSlide
-                ? 'bg-white scale-110'
-                : 'bg-white/50 hover:bg-white/70'
-            }`}
+            className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+              ? 'bg-white scale-110'
+              : 'bg-white/50 hover:bg-white/70'
+              }`}
           />
         ))}
       </div>
@@ -247,90 +408,93 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Right Side - Search Card */}
-              <div className="lg:justify-self-end w-full max-w-sm animate-slide-in-right">
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-2xl p-5 transform hover:scale-105 transition-all duration-300">
-                  <h3 className="text-lg font-bold text-gray-800 mb-4 text-center">
-                    Find Your Perfect Stay
-                  </h3>
 
-                  <div className="space-y-3">
-                    {/* Destination */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-700 flex items-center">
-                        <MapPin size={14} className="mr-1 text-blue-600" />
-                        Destination
-                      </label>
-                      <select
-                        value={searchData.destination}
-                        onChange={(e) => handleInputChange('destination', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-gray-900 text-sm"
-                      >
-                        <option value="">Select destination</option>
-                        <option value="dubai">Dubai</option>
-                        <option value="maldives">Maldives</option>
-                        <option value="bali">Bali</option>
-                        <option value="santorini">Santorini</option>
-                        <option value="miami">Miami</option>
-                      </select>
-                    </div>
+              <div className="w-full max-w-lg mx-auto mt-10">
+                <form
+                  onSubmit={handleSubmit}
+                  className="bg-white/95 backdrop-blur-sm shadow-2xl rounded-2xl p-6 space-y-5 transform hover:scale-[1.01] transition-all duration-300"
+                >
+                  <h2 className="text-xl font-bold text-center text-blue-700">
+                    Book Your Stay
+                  </h2>
 
-                    {/* Check In & Check Out in same row */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-700 flex items-center">
-                          <Calendar size={14} className="mr-1 text-blue-600" />
-                          Check in
-                        </label>
-                        <input
-                          type="date"
-                          value={searchData.checkIn}
-                          onChange={(e) => handleInputChange('checkIn', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs font-semibold text-gray-700 flex items-center">
-                          <Calendar size={14} className="mr-1 text-blue-600" />
-                          Check out
-                        </label>
-                        <input
-                          type="date"
-                          value={searchData.checkOut}
-                          onChange={(e) => handleInputChange('checkOut', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Guests */}
-                    <div className="space-y-1">
-                      <label className="text-xs font-semibold text-gray-700 flex items-center">
-                        <Users size={14} className="mr-1 text-blue-600" />
-                        Guests
-                      </label>
-                      <select
-                        value={searchData.guests}
-                        onChange={(e) => handleInputChange('guests', parseInt(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
-                      >
-                        {[1, 2, 3, 4, 5, 6].map(num => (
-                          <option key={num} value={num}>{num} Guest{num > 1 ? 's' : ''}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Search Button */}
-                    <button
-                      onClick={handleSearch}
-                      className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105 mt-4 text-sm"
+                  {/* Room Select */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 flex items-center mb-1">
+                      <BedDouble size={16} className="mr-1 text-blue-600" />
+                      Select Room
+                    </label>
+                    <select
+                      value={formData.room}
+                      onChange={(e) => handleChange("room", e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
                     >
-                      <Search size={18} />
-                      <span>Search Hotels</span>
-                    </button>
+                      <option value="">Choose a room</option>
+                      {rooms.map((room) => (
+                        <option key={room._id} value={room._id}>
+                          {room.roomNumber} - {room.roomType}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
+
+                  {/* Check-in and Check-out */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 flex items-center mb-1">
+                        <Calendar size={16} className="mr-1 text-blue-600" />
+                        Check-in
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.checkInDate}
+                        onChange={(e) => handleChange("checkInDate", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700 flex items-center mb-1">
+                        <Calendar size={16} className="mr-1 text-blue-600" />
+                        Check-out
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.checkOutDate}
+                        onChange={(e) => handleChange("checkOutDate", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Guests */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 flex items-center mb-1">
+                      <Users2 size={16} className="mr-1 text-blue-600" />
+                      Guests
+                    </label>
+                    <select
+                      value={formData.numberOfGuests}
+                      onChange={(e) =>
+                        handleChange("numberOfGuests", parseInt(e.target.value))
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    >
+                      {[1, 2, 3, 4, 5, 6].map((num) => (
+                        <option key={num} value={num}>
+                          {num} Guest{num > 1 ? "s" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition transform hover:scale-[1.02]"
+                  >
+                    Confirm Booking
+                  </button>
+                </form>
               </div>
             </div>
           </div>
@@ -377,7 +541,7 @@ export default function HomePage() {
       </section>
 
       {/* Stay Inspired Newsletter Section */}
-      
+
 
       {/* Exclusive Offers Section */}
       <section className="relative z-10 bg-gray-50 py-16">
@@ -446,7 +610,7 @@ export default function HomePage() {
         </div>
       </section>
 
-    
+
 
       <section className="relative z-10 bg-gray-900 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">

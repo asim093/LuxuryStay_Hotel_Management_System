@@ -35,11 +35,8 @@ function App() {
     // Initialize sample data
     initializeSampleData();
 
-    // Check for existing token on app startup
     const token = localStorage.getItem('token');
     if (token && !isAuthenticated) {
-      // You could add token validation here if needed
-      // For now, we'll just check if token exists
       console.log('Token found in localStorage');
     }
   }, []);
@@ -48,7 +45,6 @@ function App() {
     dispatch(removeUser());
   };
 
-  // Protected Route Component
   const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
   };
