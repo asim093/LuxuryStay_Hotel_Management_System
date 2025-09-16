@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { 
   Users, 
   Hotel, 
@@ -10,27 +11,56 @@ import {
   Eye
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { toast } from 'react-toastify';
 
 const DashboardHome = () => {
+  const token = useSelector((state) => state.user?.data?.user?.token || state.user?.token);
   const [stats, setStats] = useState({
-    totalStaff: 0,
-    activeStaff: 0,
-    totalReservations: 0,
-    totalRevenue: 0
+    users: { total: 0, staff: 0, activeStaff: 0, guests: 0, activeGuests: 0 },
+    bookings: { total: 0, confirmed: 0, checkedIn: 0, pending: 0 },
+    rooms: { total: 0, available: 0, occupied: 0, maintenance: 0 },
+    revenue: 0
   });
+  const [recentActivities, setRecentActivities] = useState({
+    bookings: [],
+    users: []
+  });
+  const [loading, setLoading] = useState(true);
+
+  const fetchDashboardData = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3001/api/user/dashboard/stats', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data.stats);
+        setRecentActivities(data.recentActivities);
+      } else {
+        console.error('Failed to fetch dashboard data');
+        toast.error('Failed to load dashboard data');
+      }
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Error loading dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Load data from localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-    
-    setStats({
-      totalStaff: users.length,
-      activeStaff: users.filter(user => user.status === 'Active').length,
-      totalReservations: reservations.length,
-      totalRevenue: reservations.reduce((sum, res) => sum + (res.amount || 0), 0)
-    });
-  }, []);
+    fetchDashboardData();
+  }, [token]);
 
   const chartData = [
     { month: 'Jan', revenue: 45000, reservations: 120, occupancy: 85 },
@@ -47,17 +77,14 @@ const DashboardHome = () => {
     { name: 'Cancelled', value: 15, color: '#ef4444' }
   ];
 
-  const recentActivities = [
-    { id: 1, action: 'New staff member added', user: 'Sarah Johnson', time: '2 hours ago', type: 'staff' },
-    { id: 2, action: 'Reservation confirmed', user: 'Room 201', time: '3 hours ago', type: 'reservation' },
-    { id: 3, action: 'Payment received', user: 'John Smith', time: '5 hours ago', type: 'payment' },
-    { id: 4, action: 'Maintenance request', user: 'Room 305', time: '1 day ago', type: 'maintenance' }
-  ];
+  // Dummy data removed - now using real data from API
 
   const getActivityIcon = (type) => {
     switch (type) {
-      case 'staff': return <Users size={16} className="text-blue-500" />;
-      case 'reservation': return <Calendar size={16} className="text-green-500" />;
+      case 'staff': 
+      case 'user': return <Users size={16} className="text-blue-500" />;
+      case 'reservation': 
+      case 'booking': return <Calendar size={16} className="text-green-500" />;
       case 'payment': return <DollarSign size={16} className="text-purple-500" />;
       case 'maintenance': return <Hotel size={16} className="text-orange-500" />;
       default: return <Eye size={16} className="text-gray-500" />;
@@ -78,7 +105,7 @@ const DashboardHome = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Staff</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalStaff}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.users.staff}</p>
             </div>
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
               <Users size={24} className="text-white" />
@@ -86,16 +113,16 @@ const DashboardHome = () => {
           </div>
           <div className="flex items-center mt-4">
             <TrendingUp size={16} className="text-green-500" />
-            <span className="text-sm font-medium text-green-600 ml-1">+12.5%</span>
-            <span className="text-sm text-gray-500 ml-1">from last month</span>
+            <span className="text-sm font-medium text-green-600 ml-1">{stats.users.activeStaff}</span>
+            <span className="text-sm text-gray-500 ml-1">active</span>
           </div>
         </div>
 
         <div className="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Staff</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activeStaff}</p>
+              <p className="text-sm font-medium text-gray-600">Total Guests</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.users.guests}</p>
             </div>
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
               <Users size={24} className="text-white" />
@@ -103,16 +130,16 @@ const DashboardHome = () => {
           </div>
           <div className="flex items-center mt-4">
             <TrendingUp size={16} className="text-green-500" />
-            <span className="text-sm font-medium text-green-600 ml-1">+8.2%</span>
-            <span className="text-sm text-gray-500 ml-1">from last month</span>
+            <span className="text-sm font-medium text-green-600 ml-1">{stats.users.activeGuests}</span>
+            <span className="text-sm text-gray-500 ml-1">active</span>
           </div>
         </div>
 
         <div className="stat-card bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Reservations</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalReservations}</p>
+              <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.bookings.total}</p>
             </div>
             <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
               <Calendar size={24} className="text-white" />
@@ -120,8 +147,8 @@ const DashboardHome = () => {
           </div>
           <div className="flex items-center mt-4">
             <TrendingUp size={16} className="text-green-500" />
-            <span className="text-sm font-medium text-green-600 ml-1">+15.3%</span>
-            <span className="text-sm text-gray-500 ml-1">from last month</span>
+            <span className="text-sm font-medium text-green-600 ml-1">{stats.bookings.confirmed}</span>
+            <span className="text-sm text-gray-500 ml-1">confirmed</span>
           </div>
         </div>
 
@@ -129,7 +156,7 @@ const DashboardHome = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">${stats.totalRevenue.toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">${loading ? '...' : stats.revenue.toLocaleString()}</p>
             </div>
             <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
               <DollarSign size={24} className="text-white" />
@@ -137,8 +164,8 @@ const DashboardHome = () => {
           </div>
           <div className="flex items-center mt-4">
             <TrendingUp size={16} className="text-green-500" />
-            <span className="text-sm font-medium text-green-600 ml-1">+22.1%</span>
-            <span className="text-sm text-gray-500 ml-1">from last month</span>
+            <span className="text-sm font-medium text-green-600 ml-1">{stats.rooms.occupied}</span>
+            <span className="text-sm text-gray-500 ml-1">rooms occupied</span>
           </div>
         </div>
       </div>
@@ -187,20 +214,61 @@ const DashboardHome = () => {
               </button>
             </div>
             <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                    {getActivityIcon(activity.type)}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900 text-sm">{activity.action}</h3>
-                    <p className="text-sm text-gray-600">{activity.user}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">{activity.time}</p>
-                  </div>
+              {loading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="text-gray-500 mt-2">Loading activities...</p>
                 </div>
-              ))}
+              ) : recentActivities.bookings.length === 0 && recentActivities.users.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Eye size={48} className="mx-auto mb-4 text-gray-300" />
+                  <p>No recent activities found</p>
+                </div>
+              ) : (
+                <>
+                  {/* Recent Bookings */}
+                  {recentActivities.bookings.slice(0, 3).map((booking) => (
+                    <div key={booking._id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        {getActivityIcon('reservation')}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 text-sm">
+                          Booking {booking.status} - Room {booking.room?.roomNumber}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          {booking.guest?.name || 'Unknown Guest'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">
+                          {new Date(booking.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Recent Users */}
+                  {recentActivities.users.slice(0, 2).map((user) => (
+                    <div key={user._id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                        {getActivityIcon('staff')}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900 text-sm">
+                          New {user.role} registered
+                        </h3>
+                        <p className="text-sm text-gray-600">{user.name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           </div>
         </div>

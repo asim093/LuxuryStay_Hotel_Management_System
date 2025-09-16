@@ -469,3 +469,126 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", status: "failed" });
   }
 };
+
+// Dashboard Statistics API
+export const getDashboardStats = async (req, res) => {
+  try {
+    const { BookingModel } = await import('../Models/Booking.model.js');
+    const { RoomModel } = await import('../Models/Room.model.js');
+    
+    // Get user statistics
+    const totalUsers = await Usermodle.countDocuments();
+    const totalStaff = await Usermodle.countDocuments({ 
+      role: { $in: ['Manager', 'Receptionist', 'Staff', 'Housekeeping', 'Maintenance'] } 
+    });
+    const activeStaff = await Usermodle.countDocuments({ 
+      role: { $in: ['Manager', 'Receptionist', 'Staff', 'Housekeeping', 'Maintenance'] },
+      isActive: true 
+    });
+    const totalGuests = await Usermodle.countDocuments({ role: 'Guest' });
+    const activeGuests = await Usermodle.countDocuments({ role: 'Guest', isActive: true });
+
+    // Get booking statistics
+    const totalBookings = await BookingModel.countDocuments();
+    const confirmedBookings = await BookingModel.countDocuments({ status: 'Confirmed' });
+    const checkedInBookings = await BookingModel.countDocuments({ status: 'Checked In' });
+    const pendingBookings = await BookingModel.countDocuments({ status: 'Pending' });
+
+    // Get room statistics
+    const totalRooms = await RoomModel.countDocuments();
+    const availableRooms = await RoomModel.countDocuments({ status: 'Available' });
+    const occupiedRooms = await RoomModel.countDocuments({ status: 'Occupied' });
+    const maintenanceRooms = await RoomModel.countDocuments({ status: 'Maintenance' });
+
+    // Calculate revenue (if booking model has totalAmount field)
+    const revenueResult = await BookingModel.aggregate([
+      { $match: { status: { $in: ['Confirmed', 'Checked In', 'Checked Out'] } } },
+      { $group: { _id: null, totalRevenue: { $sum: '$totalAmount' } } }
+    ]);
+    const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+
+    // Get recent activities
+    const recentBookings = await BookingModel.find()
+      .populate('guest', 'name email')
+      .populate('room', 'roomNumber roomType')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const recentUsers = await Usermodle.find()
+      .select('name email role createdAt')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    res.json({
+      stats: {
+        users: {
+          total: totalUsers,
+          staff: totalStaff,
+          activeStaff,
+          guests: totalGuests,
+          activeGuests
+        },
+        bookings: {
+          total: totalBookings,
+          confirmed: confirmedBookings,
+          checkedIn: checkedInBookings,
+          pending: pendingBookings
+        },
+        rooms: {
+          total: totalRooms,
+          available: availableRooms,
+          occupied: occupiedRooms,
+          maintenance: maintenanceRooms
+        },
+        revenue: totalRevenue
+      },
+      recentActivities: {
+        bookings: recentBookings,
+        users: recentUsers
+      }
+    });
+  } catch (error) {
+    console.error("Dashboard stats error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Guest Profile Management
+export const updateGuestProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, profileImage } = req.body;
+
+    const user = await Usermodle.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role !== 'Guest') {
+      return res.status(403).json({ message: "Only guests can update their profile" });
+    }
+
+    // Update fields
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (phone) user.phone = phone;
+    if (profileImage) user.profileImage = profileImage;
+
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        profileImage: user.profileImage,
+        role: user.role
+      }
+    });
+  } catch (error) {
+    console.error("Update guest profile error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};

@@ -527,55 +527,66 @@ const RoomManagement = () => {
               const StatusIcon = statusInfo?.icon || CheckCircle;
 
               return (
-                <div key={room._id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+                <div key={room._id} className="bg-white rounded-xl shadow-lg border border-gray-200 hover:shadow-xl hover:scale-105 transition-all duration-300 overflow-hidden">
+                  {/* Status Bar */}
+                  <div className={`h-1 w-full ${room.status === 'Available' ? 'bg-green-500' : room.status === 'Occupied' ? 'bg-red-500' : room.status === 'Maintenance' ? 'bg-yellow-500' : room.status === 'Cleaning' ? 'bg-blue-500' : 'bg-gray-500'}`}></div>
+                  
                   <div className="p-6">
                     {/* Room Header */}
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-gray-900">Room {room.roomNumber}</h3>
+                        <h3 className="text-2xl font-bold text-gray-900">Room {room.roomNumber}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <MapPin size={16} />
+                          <MapPin size={16} className="text-indigo-500" />
                           <span>Floor {room.floor}</span>
                         </div>
                       </div>
-                      <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${statusInfo?.color || 'bg-gray-100 text-gray-800'}`}>
-                        <StatusIcon size={12} />
+                      <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold border-2 ${statusInfo?.color || 'bg-gray-100 text-gray-800'}`}>
+                        <StatusIcon size={14} />
                         {room.status}
                       </div>
                     </div>
 
                     {/* Room Type */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`p-2 rounded-lg ${roomTypeInfo?.color || 'bg-gray-100'}`}>
-                        <RoomTypeIcon size={18} />
+                    <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div className={`p-3 rounded-xl ${roomTypeInfo?.color || 'bg-gray-100'} shadow-sm`}>
+                        <RoomTypeIcon size={20} />
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900">{room.roomType}</p>
+                        <p className="font-semibold text-gray-900 text-lg">{room.roomType}</p>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Users size={14} />
+                          <Users size={16} className="text-blue-500" />
                           <span>{room.capacity} guest{room.capacity > 1 ? 's' : ''}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Price */}
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-lg font-semibold text-green-600">Rs:{room.pricePerNight}</span>
-                      <span className="text-sm text-gray-600">/night</span>
+                    <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                      <div>
+                        <span className="text-2xl font-bold text-green-600">₹{room.pricePerNight}</span>
+                        <span className="text-sm text-gray-600 ml-1">/night</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">Starting from</p>
+                      </div>
                     </div>
 
                     {/* Amenities */}
                     {room.amenities && room.amenities.length > 0 && (
                       <div className="mb-4">
-                        <p className="text-xs font-medium text-gray-500 mb-2">Amenities:</p>
-                        <div className="flex flex-wrap gap-1">
+                        <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          Amenities
+                        </p>
+                        <div className="flex flex-wrap gap-2">
                           {room.amenities.slice(0, 3).map((amenity, index) => (
-                            <span key={index} className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                            <span key={index} className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
                               {amenity}
                             </span>
                           ))}
                           {room.amenities.length > 3 && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
                               +{room.amenities.length - 3} more
                             </span>
                           )}
@@ -584,18 +595,18 @@ const RoomManagement = () => {
                     )}
 
                     {/* Actions */}
-                    <div className="space-y-3">
+                    <div className="space-y-3 pt-2 border-t border-gray-100">
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleEdit(room)}
-                          className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors gap-2"
+                          className="flex-1 inline-flex items-center justify-center px-4 py-2.5 border-2 border-indigo-300 rounded-lg text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 hover:border-indigo-400 transition-all duration-200 gap-2"
                         >
                           <Edit size={16} />
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(room._id)}
-                          className="inline-flex items-center justify-center px-3 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                          className="inline-flex items-center justify-center px-4 py-2.5 border-2 border-red-300 rounded-lg text-sm font-semibold text-red-700 bg-red-50 hover:bg-red-100 hover:border-red-400 transition-all duration-200"
                         >
                           <Trash2 size={16} />
                         </button>

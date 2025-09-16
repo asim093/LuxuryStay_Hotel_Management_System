@@ -26,6 +26,11 @@ export default function Navbar() {
     { name: 'Destinations', href: '/pages/Destinations' },
   ];
 
+  const userNavItems = [
+    { name: 'My Bookings', href: '/pages/MyBookings' },
+    { name: 'Profile', href: '/pages/Profile' },
+  ];
+
   // Listen for demo button clicks
   useEffect(() => {
     const handleOpenSignup = () => {
@@ -176,15 +181,13 @@ export default function Navbar() {
                     </span>
                   </li>
                   <div className="divider my-1"></div>
-                  <li>
-                    <Link href="/profile" className="justify-between hover:bg-primary hover:text-primary-content transition-colors duration-200">
-                      Profile
-                      <span className="badge badge-primary badge-sm">New</span>
-                    </Link>
-                  </li>
-                  <li><Link href="/bookings" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">My Bookings</Link></li>
-                  <li><Link href="/favorites" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Favorites</Link></li>
-                  <li><Link href="/settings" className="hover:bg-primary hover:text-primary-content transition-colors duration-200">Settings</Link></li>
+                  {userNavItems.map((item) => (
+                    <li key={item.name}>
+                      <Link href={item.href} className="hover:bg-primary hover:text-primary-content transition-colors duration-200">
+                        {item.name}
+                      </Link>
+                    </li>
+                  ))}
                   <div className="divider my-1"></div>
                   <li>
                     <button onClick={handleLogout} className="text-error hover:bg-error hover:text-error-content transition-colors duration-200">

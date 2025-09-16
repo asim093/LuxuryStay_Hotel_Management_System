@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { 
   Users, 
   Key, 
@@ -23,32 +24,121 @@ import {
   Star
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { toast } from 'react-toastify';
 
 const ReceptionistDashboard = () => {
+  const token = useSelector((state) => state.user?.data?.user?.token || state.user?.token);
+  
+  // Debug token
+  useEffect(() => {
+    console.log('Token in Receptionist Dashboard:', token ? 'Present' : 'Missing');
+  }, [token]);
   const [stats, setStats] = useState({
     totalGuests: 0,
     checkInsToday: 0,
     checkOutsToday: 0,
     pendingRequests: 0
   });
+  const [recentCheckIns, setRecentCheckIns] = useState([]);
+  const [upcomingCheckOuts, setUpcomingCheckOuts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchReceptionistData = async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Fetch all bookings
+      const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (bookingsResponse.ok) {
+        const bookingsData = await bookingsResponse.json();
+        const bookings = bookingsData.bookings || [];
+        
+        console.log('Fetched bookings:', bookings.length);
+
+        // Calculate stats
+        const checkedInGuests = bookings.filter(booking => booking.status === 'Checked In');
+        const todayCheckIns = bookings.filter(booking => 
+          booking.status === 'Confirmed' && 
+          new Date(booking.checkInDate).toDateString() === new Date().toDateString()
+        );
+        const todayCheckOuts = bookings.filter(booking => 
+          new Date(booking.checkOutDate).toDateString() === new Date().toDateString()
+        );
+
+        console.log('Stats calculated:', {
+          checkedInGuests: checkedInGuests.length,
+          todayCheckIns: todayCheckIns.length,
+          todayCheckOuts: todayCheckOuts.length
+        });
+
+        setStats({
+          totalGuests: checkedInGuests.length,
+          checkInsToday: todayCheckIns.length,
+          checkOutsToday: todayCheckOuts.length,
+          pendingRequests: bookings.filter(booking => booking.status === 'Pending').length
+        });
+
+        // Set recent check-ins (last 5)
+        const recentCheckInsData = checkedInGuests.slice(0, 5).map(booking => ({
+          id: booking._id,
+          guest: booking.guest?.name || 'Unknown Guest',
+          room: booking.room?.roomNumber || 'N/A',
+          time: new Date(booking.actualCheckInTime || booking.createdAt).toLocaleTimeString(),
+          type: booking.room?.roomType || 'Standard',
+          duration: calculateNights(booking.checkInDate, booking.checkOutDate) + ' nights',
+          vip: booking.isVip || false
+        }));
+        
+        setRecentCheckIns(recentCheckInsData);
+
+        // Set upcoming check-outs
+        const upcomingCheckOutsData = todayCheckOuts.map(booking => ({
+          id: booking._id,
+          guest: booking.guest?.name || 'Unknown Guest',
+          room: booking.room?.roomNumber || 'N/A',
+          time: new Date(booking.checkOutDate).toLocaleTimeString(),
+          payment: booking.paymentStatus || 'Pending',
+          luggage: booking.luggageStored || false
+        }));
+        
+        setUpcomingCheckOuts(upcomingCheckOutsData);
+        
+        console.log('Recent check-ins:', recentCheckInsData);
+        console.log('Upcoming check-outs:', upcomingCheckOutsData);
+      } else {
+        const errorData = await bookingsResponse.json();
+        console.error('Failed to fetch receptionist data:', errorData);
+        toast.error('Failed to load dashboard data');
+      }
+    } catch (error) {
+      console.error('Error fetching receptionist data:', error);
+      toast.error('Error loading dashboard data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateNights = (checkIn, checkOut) => {
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const diffTime = Math.abs(checkOutDate - checkInDate);
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
 
   useEffect(() => {
-    // Load data from localStorage or API
-    const bookings = JSON.parse(localStorage.getItem('bookings') || '[]');
-    const guestRequests = JSON.parse(localStorage.getItem('guest_requests') || '[]');
-    
-    setStats({
-      totalGuests: bookings.filter(booking => booking.status === 'Checked In').length || 156,
-      checkInsToday: bookings.filter(booking => 
-        booking.status === 'Confirmed' && 
-        new Date(booking.checkInDate).toDateString() === new Date().toDateString()
-      ).length || 28,
-      checkOutsToday: bookings.filter(booking => 
-        new Date(booking.checkOutDate).toDateString() === new Date().toDateString()
-      ).length || 22,
-      pendingRequests: guestRequests.filter(request => request.status === 'Pending').length || 15
-    });
-  }, []);
+    fetchReceptionistData();
+  }, [token]);
 
   const weeklyData = [
     { day: 'Mon', checkIns: 25, checkOuts: 18, occupancy: 85 },
@@ -68,20 +158,7 @@ const ReceptionistDashboard = () => {
     { name: 'Other', value: 5, color: '#6b7280' }
   ];
 
-  const recentCheckIns = [
-    { id: 1, guest: 'John Smith', room: '205', time: '10:30 AM', type: 'Standard', duration: '3 nights', vip: false },
-    { id: 2, guest: 'Maria Garcia', room: '312', time: '11:15 AM', type: 'Deluxe', duration: '2 nights', vip: true },
-    { id: 3, guest: 'David Johnson', room: '108', time: '12:45 PM', type: 'Suite', duration: '5 nights', vip: false },
-    { id: 4, guest: 'Lisa Chen', room: '401', time: '1:20 PM', type: 'Standard', duration: '1 night', vip: false },
-    { id: 5, guest: 'Robert Wilson', room: '156', time: '2:10 PM', type: 'Deluxe', duration: '4 nights', vip: true }
-  ];
-
-  const upcomingCheckOuts = [
-    { id: 1, guest: 'Sarah Thompson', room: '203', time: '11:00 AM', payment: 'Settled', luggage: true },
-    { id: 2, guest: 'Mike Rodriguez', room: '115', time: '12:00 PM', payment: 'Pending', luggage: false },
-    { id: 3, guest: 'Emily Davis', room: '309', time: '10:30 AM', payment: 'Settled', luggage: true },
-    { id: 4, guest: 'James Brown', room: '278', time: '2:00 PM', payment: 'Settled', luggage: false }
-  ];
+  // Dummy data removed - now using real data from API
 
   const guestRequests = [
     { id: 1, guest: 'John Smith', room: '205', request: 'Extra towels and pillows', time: '15 mins ago', priority: 'Low', type: 'housekeeping' },
@@ -121,9 +198,28 @@ const ReceptionistDashboard = () => {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
-        <p className="text-gray-600 mt-1">Manage guest services, check-ins, check-outs, and hotel operations</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Reception Dashboard</h1>
+          <p className="text-gray-600 mt-1">Manage guest services, check-ins, check-outs, and hotel operations</p>
+        </div>
+        <button
+          onClick={fetchReceptionistData}
+          disabled={loading}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+              Loading...
+            </>
+          ) : (
+            <>
+              <Eye size={16} className="mr-2" />
+              Refresh Data
+            </>
+          )}
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -132,7 +228,7 @@ const ReceptionistDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Current Guests</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalGuests}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.totalGuests}</p>
             </div>
             <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
               <Users size={24} className="text-white" />
@@ -149,7 +245,7 @@ const ReceptionistDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Check-ins Today</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.checkInsToday}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.checkInsToday}</p>
             </div>
             <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
               <UserCheck size={24} className="text-white" />
@@ -166,7 +262,7 @@ const ReceptionistDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Check-outs Today</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.checkOutsToday}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.checkOutsToday}</p>
             </div>
             <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
               <UserX size={24} className="text-white" />
@@ -183,7 +279,7 @@ const ReceptionistDashboard = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-600">Pending Requests</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.pendingRequests}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '...' : stats.pendingRequests}</p>
             </div>
             <div className="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
               <Bell size={24} className="text-white" />
@@ -309,7 +405,13 @@ const ReceptionistDashboard = () => {
             </button>
           </div>
           <div className="space-y-4">
-            {recentCheckIns.map((guest) => (
+            {recentCheckIns.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <UserCheck size={48} className="mx-auto mb-4 text-gray-300" />
+                <p>No recent check-ins found</p>
+              </div>
+            ) : (
+              recentCheckIns.map((guest) => (
               <div key={guest.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -330,7 +432,8 @@ const ReceptionistDashboard = () => {
                   {guest.type}
                 </span>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -344,7 +447,13 @@ const ReceptionistDashboard = () => {
             </button>
           </div>
           <div className="space-y-4">
-            {upcomingCheckOuts.map((guest) => (
+            {upcomingCheckOuts.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <UserX size={48} className="mx-auto mb-4 text-gray-300" />
+                <p>No upcoming check-outs today</p>
+              </div>
+            ) : (
+              upcomingCheckOuts.map((guest) => (
               <div key={guest.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
@@ -366,7 +475,8 @@ const ReceptionistDashboard = () => {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import roomRoutes from "./src/routes/RoomRoutes.js";
 import bookingRoutes from "./src/routes/BookingRoutes.js";
 import billingRoutes from "./src/routes/BillingRoutes.js";
 import settingsRoutes from "./src/routes/SettingsRoutes.js";
+import notificationRoutes from "./src/routes/NotificationRoutes.js";
 import connectDb from "./src/db/index.js";
 import cors from "cors";
 
@@ -24,6 +25,7 @@ app.use("/api/rooms", roomRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Test endpoint
 app.get("/api/test", (req, res) => {

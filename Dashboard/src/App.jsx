@@ -19,6 +19,7 @@ import Settings from './pages/Admin/Settings/Settings'
 import StaffManagement from './pages/Admin/Staff/StaffManagement'
 import RoomManagement from './pages/Admin/Rooms/RoomManagement'
 import BookingManagement from './pages/Admin/Bookings/BookingManagement'
+import Notifications from './pages/Notifications/Notifications'
 
 
 import { initializeSampleData } from './utils/sampleData';
@@ -37,6 +38,7 @@ import TaskHistoryPage from './pages/Maintenance/Taskhistory/TaskHistory';
 import ReceptionistDashboard from './pages/Receptionist/ReceptionisDashboard/ReceptionistDashboard';
 // import CheckInCheckOutManagement from './pages/Receptionist/CheckInoutmanagement/Checkincheckout';
 import UserProfilePage from './pages/profile/Profile';
+import Reports from './pages/Admin/Reports/Reports';
 
 
 function App() {
@@ -339,7 +341,19 @@ function App() {
           element={
             <ProtectedRoute requiredPath="/reports">
               <DashboardLayout onLogout={handleLogout}>
-                <PlaceholderModule title="Reports" />
+                <Reports />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Notifications - accessible to all roles */}
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <Notifications />
               </DashboardLayout>
             </ProtectedRoute>
           }

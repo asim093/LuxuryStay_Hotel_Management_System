@@ -26,6 +26,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { removeUser } from '../../store/features/user-slice';
+import NotificationBell from '../Notifications/NotificationBell';
 
 const DashboardLayout = ({ children, onLogout }) => {
   // Try different possible selector paths with fallback
@@ -70,6 +71,7 @@ const DashboardLayout = ({ children, onLogout }) => {
         { name: 'Reservations', icon: Calendar, href: '/reservations' },
         { name: 'Billing', icon: CreditCard, href: '/billing' },
         { name: 'Reports', icon: BarChart3, href: '/reports' },
+        { name: 'Notifications', icon: Bell, href: '/notifications' },
         { name: 'Settings', icon: Settings, href: '/settings' },
       ],
 
@@ -89,6 +91,7 @@ const DashboardLayout = ({ children, onLogout }) => {
         { name: 'Reservations', icon: Calendar, href: '/reservations' },
         { name: 'Billing', icon: CreditCard, href: '/billing' },
         { name: 'Reports', icon: BarChart3, href: '/reports' },
+        { name: 'Notifications', icon: Bell, href: '/notifications' },
         { name: 'Settings', icon: Settings, href: '/settings' },
       ],
 
@@ -311,10 +314,7 @@ const DashboardLayout = ({ children, onLogout }) => {
               )}
 
               <div className="flex items-center space-x-4">
-                <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                  <Bell size={20} />
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                </button>
+                <NotificationBell />
 
                 {/* Profile Dropdown */}
                 <div className="relative">

@@ -5,6 +5,7 @@ import useCallpostApi from '../../Hooks/useCallpostApi';
 import { addUser } from '../../store/features/user-slice';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ForgotPasswordModal from '../../components/Auth/ForgotPasswordModal';
 
 const Login = ({ onSwitchToSignup }) => {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ const Login = ({ onSwitchToSignup }) => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
 
   const { response, loading, error, ApiCall } = useCallpostApi();
 
@@ -158,9 +160,13 @@ const Login = ({ onSwitchToSignup }) => {
                 <input type="checkbox" className="checkbox checkbox-primary checkbox-sm" />
                 <span className="label-text ml-2">Remember me</span>
               </label>
-              <a href="#" className="text-sm text-primary-600 hover:text-primary-500">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordModal(true)}
+                className="text-sm text-primary-600 hover:text-primary-500"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
@@ -190,6 +196,12 @@ const Login = ({ onSwitchToSignup }) => {
           </form>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        isOpen={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+      />
     </div>
   );
 };

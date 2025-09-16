@@ -11,7 +11,9 @@ import {
   getProfile,
   AddUsers,
   deleteUser,
-  EditUser
+  EditUser,
+  getDashboardStats,
+  updateGuestProfile
 } from "../controllers/Usercontroller.js";
 import upload from "../middleware/Multer.middleware.js";
 import authMiddleware, {
@@ -39,6 +41,10 @@ router.put('/users/:id' , authMiddleware , EditUser)
 router.delete("/:id/:entity" , authMiddleware , deleteUser)
 router.patch("/:userId/role", authMiddleware, requireAdmin, updateUserRole);
 router.patch("/users/:userId/status", authMiddleware, requireAdmin, toggleUserStatus);
+
+// Dashboard and profile routes
+router.get("/dashboard/stats", authMiddleware, getDashboardStats);
+router.put("/guest/:id/profile", authMiddleware, updateGuestProfile);
 
 
 export default router;

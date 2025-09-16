@@ -13,7 +13,7 @@ const AllUsers = () => {
 
   const token = useSelector((state) => state.user?.data?.user?.token || state.user?.token);
 
-  const validRoles = ['Admin', 'Manager', 'Receptionist', "Staff", 'Housekeeping', 'Guest'];
+  const validRoles = ['Guest'];
 
   const isValidJWT = (token) => {
     if (!token) return false;
@@ -69,7 +69,8 @@ const AllUsers = () => {
 
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3001/api/user/users', {
+      // Fetch only guests from the API
+      const response = await fetch('http://localhost:3001/api/user/users/Guest', {
         headers: {
           'Authorization': `Bearer ${cleanToken}`,
           'Content-Type': 'application/json',
@@ -98,7 +99,7 @@ const AllUsers = () => {
     }
   }, [token]);
 
-  const updateUserRole = useCallback(async (userId, newRole) => {
+  const toggleUserStatus = useCallback(async (userId, newStatus) => {
     const cleanToken = getCleanToken();
 
     if (!cleanToken) {
@@ -108,13 +109,12 @@ const AllUsers = () => {
 
     try {
       setUpdatingUser(userId);
-      const response = await fetch(`http://localhost:3001/api/user/${userId}/role`, {
+      const response = await fetch(`http://localhost:3001/api/user/users/${userId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${cleanToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ role: newRole }),
       });
 
       if (response.status === 401) {
@@ -127,15 +127,15 @@ const AllUsers = () => {
       if (response.ok) {
         setUsers(prevUsers =>
           prevUsers.map(user =>
-            user._id === userId ? { ...user, role: newRole } : user
+            user._id === userId ? { ...user, isActive: newStatus } : user
           )
         );
-        showToast('User role updated successfully!', 'success');
+        showToast(`Guest ${newStatus ? 'activated' : 'deactivated'} successfully!`, 'success');
       } else {
-        showToast(data.message || 'Failed to update user role', 'error');
+        showToast(data.message || 'Failed to update guest status', 'error');
       }
     } catch (err) {
-      console.error('Update role error:', err);
+      console.error('Update status error:', err);
       showToast('Network error occurred', 'error');
     } finally {
       setUpdatingUser(null);
@@ -153,9 +153,11 @@ const AllUsers = () => {
         user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+      const matchesStatus = selectedRole === 'all' || 
+        (selectedRole === 'active' && user.isActive) ||
+        (selectedRole === 'inactive' && !user.isActive);
 
-      return matchesSearch && matchesRole;
+      return matchesSearch && matchesStatus;
     });
 
     filtered.sort((a, b) => {
@@ -246,24 +248,26 @@ const AllUsers = () => {
               </div>
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-              <p className="text-gray-600">Manage user roles and permissions</p>
+              <h1 className="text-3xl font-bold text-gray-900">Guest Management</h1>
+              <p className="text-gray-600">Manage hotel guests and their information</p>
             </div>
           </div>
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-blue-600">{users.length}</div>
-            <div className="text-sm text-gray-600">Total Users</div>
+            <div className="text-sm text-gray-600">Total Guests</div>
           </div>
-          {roleStats.map(({ role, count }) => (
-            <div key={role} className="bg-white rounded-lg shadow p-4">
-              <div className="text-2xl font-bold text-gray-900">{count}</div>
-              <div className="text-sm text-gray-600">{role}s</div>
-            </div>
-          ))}
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-green-600">{users.filter(user => user.isActive).length}</div>
+            <div className="text-sm text-gray-600">Active Guests</div>
+          </div>
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-gray-600">{users.filter(user => !user.isActive).length}</div>
+            <div className="text-sm text-gray-600">Inactive Guests</div>
+          </div>
         </div>
 
         {/* Filters */}
@@ -292,10 +296,9 @@ const AllUsers = () => {
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
               >
-                <option value="all">All Roles</option>
-                {validRoles.map(role => (
-                  <option key={role} value={role}>{role}</option>
-                ))}
+                <option value="all">All Guests</option>
+                <option value="active">Active Guests</option>
+                <option value="inactive">Inactive Guests</option>
               </select>
 
               <select
@@ -373,7 +376,7 @@ const AllUsers = () => {
                     Contact
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Role
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Joined
@@ -428,8 +431,12 @@ const AllUsers = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${getRoleColor(user.role)}`}>
-                          {user.role}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full border ${
+                          user.isActive 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : 'bg-red-100 text-red-800 border-red-200'
+                        }`}>
+                          {user.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -440,23 +447,21 @@ const AllUsers = () => {
                         }) : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                        <div className="relative inline-block text-left">
-                          <select
-                            value={user.role}
-                            onChange={(e) => updateUserRole(user._id, e.target.value)}
-                            disabled={updatingUser === user._id}
-                            className="block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
-                          >
-                            {validRoles.map((role) => (
-                              <option key={role} value={role}>{role}</option>
-                            ))}
-                          </select>
-                          {updatingUser === user._id && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 rounded-md">
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                            </div>
+                        <button
+                          onClick={() => toggleUserStatus(user._id, !user.isActive)}
+                          disabled={updatingUser === user._id}
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                            user.isActive
+                              ? 'bg-red-100 text-red-800 hover:bg-red-200'
+                              : 'bg-green-100 text-green-800 hover:bg-green-200'
+                          } disabled:opacity-50`}
+                        >
+                          {updatingUser === user._id ? (
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
+                          ) : (
+                            user.isActive ? 'Deactivate' : 'Activate'
                           )}
-                        </div>
+                        </button>
                       </td>
                     </tr>
                   ))
