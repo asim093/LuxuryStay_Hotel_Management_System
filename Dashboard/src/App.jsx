@@ -35,6 +35,8 @@ import MaintenanceDashboard from './pages/Maintenance/MaintenanceDashboard/Maint
 import MaintenanceTasksPage from './pages/Maintenance/Taskpage/Taskpage';
 import TaskHistoryPage from './pages/Maintenance/Taskhistory/TaskHistory';
 import ReceptionistDashboard from './pages/Receptionist/ReceptionisDashboard/ReceptionistDashboard';
+// import CheckInCheckOutManagement from './pages/Receptionist/CheckInoutmanagement/Checkincheckout';
+import UserProfilePage from './pages/profile/Profile';
 
 
 function App() {
@@ -56,14 +58,15 @@ function App() {
     dispatch(removeUser());
   };
 
+  // Role-based access control configuration
   const rolePermissions = {
     Admin: [
-      '/dashboard', '/allUsers', '/manager', '/housekeeping', 
+      '/dashboard', '/allUsers', '/manager', '/housekeeping',
       '/receptionist', '/maintenance', '/billing', '/settings',
       '/staff', '/rooms', '/reservations', '/reports'
     ],
     Manager: [
-      '/dashboard', '/staff', '/rooms', '/reservations', 
+      '/dashboard', '/staff', '/rooms', '/reservations',
       '/billing', '/reports', '/settings'
     ],
     Staff: [
@@ -80,33 +83,25 @@ function App() {
     ]
   };
 
-  // Check if user has access to a specific route
   const hasAccess = (path) => {
     if (!role) return false;
-    if (role === 'Guest') return false; // Guest role excluded
-    
+    if (role === 'Guest') return false;
+
     const allowedPaths = rolePermissions[role] || [];
     return allowedPaths.includes(path);
   };
 
-  // Protected Route Component with role-based access
   const ProtectedRoute = ({ children, requiredPath }) => {
     if (!isAuthenticated) {
       return <Navigate to="/login" replace />;
     }
 
-    if (!hasAccess(requiredPath)) {
-      // Redirect to dashboard if no access, or show unauthorized message
-      toast.error('You do not have permission to access this page');
-      return <Navigate to="/dashboard" replace />;
-    }
+
 
     return children;
   };
 
-  // Simple Protected Route for basic authentication check
   const BasicProtectedRoute = ({ children }) => {
-  const ProtectedRoute = ({ children }) => {
     return isAuthenticated ? children : <Navigate to="/login" replace />;
   };
 
@@ -131,7 +126,6 @@ function App() {
           }
         />
 
-        {/* Dashboard - accessible to all authenticated users except Guest */}
         <Route
           path="/dashboard"
           element={
@@ -143,7 +137,17 @@ function App() {
           }
         />
 
-        {/* Admin-only routes */}
+        <Route
+          path="/profile"
+          element={
+            <BasicProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <UserProfilePage />
+              </DashboardLayout>
+            </BasicProtectedRoute>
+          }
+        />
+
         <Route
           path="/allUsers"
           element={
@@ -154,6 +158,17 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* <Route
+          path="/checkin-checkout"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <CheckInCheckOutManagement />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        /> */}
         <Route
           path="/manager"
           element={

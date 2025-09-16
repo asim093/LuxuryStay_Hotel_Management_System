@@ -38,7 +38,7 @@ const DashboardLayout = ({ children, onLogout }) => {
     if (state.user) return state.user;
     return null;
   });
-  
+
   const dispatch = useDispatch();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -72,7 +72,7 @@ const DashboardLayout = ({ children, onLogout }) => {
         { name: 'Reports', icon: BarChart3, href: '/reports' },
         { name: 'Settings', icon: Settings, href: '/settings' },
       ],
-      
+
       Manager: [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
         {
@@ -103,8 +103,6 @@ const DashboardLayout = ({ children, onLogout }) => {
         { name: 'Dashboard', icon: LayoutDashboard, href: '/reception-dashboard' },
         { name: 'Check In/Out', icon: UserCheck, href: '/checkin-checkout' },
         { name: 'Reservations', icon: Calendar, href: '/reservations' },
-        { name: 'Room Management', icon: Hotel, href: '/rooms' },
-        { name: 'Guest Services', icon: User2, href: '/guest-services' },
         { name: 'Billing', icon: CreditCard, href: '/billing' },
       ],
 
@@ -117,7 +115,7 @@ const DashboardLayout = ({ children, onLogout }) => {
       Housekeeping: [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/HouseKeepingDashboard' },
         { name: 'Cleaning Tasks', icon: ClipboardList, href: '/cleaning-tasks' },
-        { name: 'Cleaning Room', icon: Hotel, href: '/cleaning-room'},
+        { name: 'Cleaning Room', icon: Hotel, href: '/cleaning-room' },
       ],
 
       Guest: [
@@ -171,9 +169,8 @@ const DashboardLayout = ({ children, onLogout }) => {
     <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0`}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -190,7 +187,7 @@ const DashboardLayout = ({ children, onLogout }) => {
           </button>
         </div>
 
-       
+
         {/* Navigation */}
         <nav className="flex-1 px-3 py-6 overflow-y-scroll scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400" style={{ maxHeight: 'calc(100vh - 100px)' }}>
           <div className="space-y-1">
@@ -201,11 +198,10 @@ const DashboardLayout = ({ children, onLogout }) => {
                   <Link
                     to={item.href}
                     onClick={() => setSidebarOpen(false)}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      isActiveRoute(item.href)
+                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${isActiveRoute(item.href)
                         ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <item.icon size={20} className="mr-3" />
                     {item.name}
@@ -213,19 +209,17 @@ const DashboardLayout = ({ children, onLogout }) => {
                 ) : (
                   <button
                     onClick={() => toggleSubmenu(item.name)}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${
-                      isActiveRoute(item.href)
+                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-lg transition-colors duration-200 ${isActiveRoute(item.href)
                         ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <item.icon size={20} className="mr-3" />
                     {item.name}
                     <ChevronDown
                       size={16}
-                      className={`ml-auto transition-transform duration-200 ${
-                        submenuOpen[item.name] ? 'rotate-180' : ''
-                      }`}
+                      className={`ml-auto transition-transform duration-200 ${submenuOpen[item.name] ? 'rotate-180' : ''
+                        }`}
                     />
                   </button>
                 )}
@@ -238,11 +232,10 @@ const DashboardLayout = ({ children, onLogout }) => {
                         key={sub.name}
                         to={sub.href}
                         onClick={() => setSidebarOpen(false)}
-                        className={`block px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${
-                          isActiveRoute(sub.href)
+                        className={`block px-3 py-2 text-sm rounded-lg transition-colors duration-200 ${isActiveRoute(sub.href)
                             ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600'
                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                        }`}
+                          }`}
                       >
                         {sub.name}
                       </Link>
@@ -374,24 +367,7 @@ const DashboardLayout = ({ children, onLogout }) => {
                             <User size={16} className="mr-3 text-gray-400" />
                             Profile
                           </Link>
-                          {['Admin', 'Manager'].includes(userRole) && (
-                            <Link
-                              to="/settings"
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                              onClick={() => setProfileDropdownOpen(false)}
-                            >
-                              <Cog size={16} className="mr-3 text-gray-400" />
-                              Settings
-                            </Link>
-                          )}
-                          <Link
-                            to="/security"
-                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                            onClick={() => setProfileDropdownOpen(false)}
-                          >
-                            <Shield size={16} className="mr-3 text-gray-400" />
-                            Security
-                          </Link>
+                    
                         </div>
 
                         <div className="border-t border-gray-200 py-1">
