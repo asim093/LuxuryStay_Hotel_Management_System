@@ -13,6 +13,7 @@ import {
   Building,
   CheckCircle,
   XCircle,
+  X,
   Check,
   AlertCircle,
   UserCheck,
@@ -20,16 +21,16 @@ import {
   Calendar,
   Shield,
   Settings,
-  Home,
-  Sparkles
+  Crown,
+  Star
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import useCallpostApi from '../../Hooks/useCallpostApi';
-import useCallgetApi from '../../Hooks/useCallgetApi';
-import Modal from '../../components/Modal/Modal';
+import useCallpostApi from '../../../Hooks/useCallpostApi';
+import useCallgetApi from '../../../Hooks/useCallgetApi';
+import Modal from '../../../components/Modal/Modal';
 
-const HouseKeeping = () => {
-  const [housekeeping, setHousekeeping] = useState([]);
+const Managers = () => {
+  const [managers, setManagers] = useState([]);
   const [modal, setModal] = useState({
     show: false,
     mode: null,
@@ -99,22 +100,23 @@ const HouseKeeping = () => {
   };
 
   useEffect(() => {
-    loadHousekeeping();
+    loadManagers();
   }, []);
 
-  const loadHousekeeping = async () => {
+  const loadManagers = async () => {
+    console.log('loadManagers called - refetching managers data...');
     try {
-      const data = await getApiCall('/api/user/users/Housekeeping', 'GET');
+      const data = await getApiCall('/api/user/users/Manager', 'GET');
       if (data && data.users) {
-        setHousekeeping(data.users);
+        console.log('Managers data loaded successfully:', data.users.length, 'managers');
+        setManagers(data.users);
       }
     } catch (error) {
-      console.error('Failed to load housekeeping staff:', error);
+      console.error('Failed to load managers:', error);
     }
   };
 
   const openModal = (mode, data = null) => {
-    console.log('openModal called with:', mode, data);
     setModal({ show: true, mode, data });
     setFormErrors({});
   };
@@ -127,190 +129,216 @@ const HouseKeeping = () => {
   const validateForm = (formData) => {
     const errors = {};
 
+    console.log('Validating form data:', formData);
+    console.log('Modal mode:', modal.mode);
+
     if (!formData.name.trim()) {
       errors.name = 'Full name is required';
+      console.log('Name validation failed');
     }
 
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
+      console.log('Email validation failed - empty');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Please enter a valid email';
+      console.log('Email validation failed - invalid format');
     }
 
     if (!formData.phone.trim()) {
       errors.phone = 'Phone number is required';
+      console.log('Phone validation failed');
     }
 
     if (modal.mode === 'add' && (!formData.password || formData.password.length < 6)) {
       errors.password = 'Password is required and must be at least 6 characters';
+      console.log('Password validation failed - add mode, password too short or missing');
     } else if (formData.password && formData.password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
+      console.log('Password validation failed - password too short');
     }
 
+    console.log('Validation errors:', errors);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const handleAddHousekeeping = async (housekeepingData) => {
-    console.log('handleAddHousekeeping called with:', housekeepingData);
-    if (!validateForm(housekeepingData)) {
+  const handleAddManager = async (managerData) => {
+    console.log('handleAddManager called with:', managerData);
+    
+    if (!validateForm(managerData)) {
       console.log('Form validation failed');
+      // Show toast for validation errors
+      const errorMessages = Object.values(formErrors);
+      if (errorMessages.length > 0) {
+        toast.error(`Validation failed: ${errorMessages.join(', ')}`);
+      }
       return;
     }
 
+    console.log('Form validation passed, making API call...');
+
     try {
-      console.log('Making API call for add housekeeping');
       await addApiCall({
         url: '/api/user/Adduser',
         method: 'POST',
         body: {
-          ...housekeepingData,
-          role: "Housekeeping"
+          ...managerData,
+          role: "Manager"
         }
       });
       console.log('API call completed');
     } catch (error) {
-      console.error('Add housekeeping error:', error);
+      console.error('Add manager error:', error);
+      toast.error('Failed to add manager');
     }
   };
 
-  const handleEditHousekeeping = async (housekeepingData) => {
-    if (!validateForm(housekeepingData)) return;
+  const handleEditManager = async (managerData) => {
+    if (!validateForm(managerData)) {
+      // Show toast for validation errors
+      const errorMessages = Object.values(formErrors);
+      if (errorMessages.length > 0) {
+        toast.error(`Validation failed: ${errorMessages.join(', ')}`);
+      }
+      return;
+    }
 
     try {
-      if (!housekeepingData.password) {
-        delete housekeepingData.password;
+      if (!managerData.password) {
+        delete managerData.password;
       }
 
       await editApiCall({
         url: `/api/user/users/${modal.data._id || modal.data.id}`,
         method: 'PUT',
-        body: housekeepingData
+        body: managerData
       });
-      loadHousekeeping();
+      loadManagers();
       closeModal()
     } catch (error) {
-      console.error('Edit housekeeping error:', error);
+      console.error('Edit manager error:', error);
+      toast.error('Failed to update manager');
     }
   };
 
-  const handleDeleteHousekeeping = async ({ id }) => {
+  const handleDeleteManager = async ({ id }) => {
     try {
       await deleteApiCall({
         url: `/api/user/${id}/users`,
         method: 'DELETE',
         body: null
       });
-      loadHousekeeping();
+      loadManagers()
       closeModal()
     } catch (error) {
-      console.error('Delete housekeeping error:', error);
+      console.error('Delete manager error:', error);
     }
   };
 
   const handleModalSubmit = (data) => {
-    console.log('handleModalSubmit called with:', data, 'mode:', modal.mode);
+    console.log('handleModalSubmit called with mode:', modal.mode, 'data:', data);
+    
     if (modal.mode === 'add') {
-      handleAddHousekeeping(data);
+      handleAddManager(data);
     } else if (modal.mode === 'edit') {
-      handleEditHousekeeping(data);
+      handleEditManager(data);
     } else if (modal.mode === 'delete') {
-      handleDeleteHousekeeping(data);
+      handleDeleteManager(data);
     }
   };
 
-  const handleStatusToggle = async (housekeepingId, currentStatus) => {
+  const handleStatusToggle = async (managerId, currentStatus) => {
     const newStatus = currentStatus === true ? 'Inactive' : 'Active';
 
     try {
       await statusApiCall({
-        url: `/api/user/users/${housekeepingId}/status`,
+        url: `/api/user/users/${managerId}/status`,
         method: 'PATCH',
         body: { status: newStatus }
       });
-      loadHousekeeping();
-      closeModal()
+      loadManagers()
     } catch (error) {
       console.error('Status toggle error:', error);
+      toast.error('Failed to update status');
     }
   };
 
+  // Add Manager Success/Error Handlers
   useEffect(() => {
-    console.log('addResponse useEffect triggered:', addResponse);
+    console.log('Add response useEffect triggered:', addResponse);
     if (addResponse) {
       if (addResponse.status === 'success') {
-        toast.success('Housekeeping staff added successfully');
+        console.log('Add success - showing toast and closing modal');
+        toast.success('Manager added successfully');
         closeModal();
-        // Force refetch after add
-        setTimeout(() => {
-          loadHousekeeping();
-        }, 100);
+        loadManagers();
       } else {
-        toast.error(addResponse.message || 'Failed to add housekeeping staff');
+        console.log('Add failed:', addResponse.message);
+        toast.error(addResponse.message || 'Failed to add manager');
       }
     }
   }, [addResponse]);
 
   useEffect(() => {
-    console.log('addError useEffect triggered:', addError);
     if (addError) {
-      toast.error(addError.message || 'Failed to add housekeeping staff');
+      toast.error(addError.message || 'Failed to add manager');
     }
   }, [addError]);
 
-  // Edit Housekeeping Success/Error Handlers
+  // Edit Manager Success/Error Handlers
   useEffect(() => {
     if (editResponse) {
       if (editResponse.status === 'success') {
-        toast.success('Housekeeping staff updated successfully');
+        toast.success('Manager updated successfully');
         closeModal();
-        // Force refetch after edit
-        setTimeout(() => {
-          loadHousekeeping();
-        }, 100);
+        loadManagers(); // Direct call, no timeout needed
       } else {
-        toast.error(editResponse.message || 'Failed to update housekeeping staff');
+        toast.error(editResponse.message || 'Failed to update manager');
       }
     }
   }, [editResponse]);
 
   useEffect(() => {
     if (editError) {
-      toast.error(editError.message || 'Failed to update housekeeping staff');
+      toast.error(editError.message || 'Failed to update manager');
     }
   }, [editError]);
 
-  // Delete Housekeeping Success/Error Handlers
+  // Delete Manager Success/Error Handlers
   useEffect(() => {
+    console.log('Delete response useEffect triggered:', deleteResponse);
     if (deleteResponse) {
       if (deleteResponse.status === 'success') {
-        toast.success('Housekeeping staff deleted successfully');
-        closeModal(); // ✅ Modal close karo
-        setTimeout(() => {
-          loadHousekeeping(); // ✅ Data refetch with slight delay
-        }, 100);
+        console.log('Delete success - showing toast and closing modal');
+        toast.success('Manager deleted successfully');
+        closeModal();
+        console.log('Calling loadManagers after delete...');
+        loadManagers();
       } else {
-        toast.error(deleteResponse.message || 'Failed to delete housekeeping staff');
+        console.log('Delete failed:', deleteResponse.message);
+        toast.error(deleteResponse.message || 'Failed to delete manager');
       }
     }
   }, [deleteResponse]);
 
   useEffect(() => {
     if (deleteError) {
-      toast.error(deleteError.message || 'Failed to delete housekeeping staff');
+      toast.error(deleteError.message || 'Failed to delete manager');
     }
   }, [deleteError]);
 
   // Status Toggle Success/Error Handlers
   useEffect(() => {
+    console.log('Status response useEffect triggered:', statusResponse);
     if (statusResponse) {
       if (statusResponse.status === 'success') {
+        console.log('Status success - showing toast and refetching');
         toast.success('Status updated successfully');
-        // Force refetch after status change
-        setTimeout(() => {
-          loadHousekeeping();
-        }, 100);
+        console.log('Calling loadManagers after status change...');
+        loadManagers();
       } else {
+        console.log('Status failed:', statusResponse.message);
         toast.error(statusResponse.message || 'Failed to update status');
       }
     }
@@ -322,14 +350,14 @@ const HouseKeeping = () => {
     }
   }, [statusError]);
 
-  const filteredHousekeeping = housekeeping.filter(h => {
+  const filteredManagers = managers.filter(m => {
     const matchesSearch = !filters.search ||
-      h.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      h.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      h.phone.includes(filters.search);
+      m.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      m.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      m.phone.includes(filters.search);
 
-    const matchesRole = filters.role === 'all' || h.role === filters.role;
-    const matchesStatus = filters.status === 'all' || h.status === filters.status;
+    const matchesRole = filters.role === 'all' || m.role === filters.role;
+    const matchesStatus = filters.status === 'all' || m.status === filters.status;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -348,17 +376,17 @@ const HouseKeeping = () => {
 
   const getModalTitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Add New Housekeeping Staff';
-      case 'edit': return 'Edit Housekeeping Staff';
-      case 'delete': return 'Delete Housekeeping Staff';
+      case 'add': return 'Add New Manager';
+      case 'edit': return 'Edit Manager';
+      case 'delete': return 'Delete Manager';
       default: return '';
     }
   };
 
   const getModalSubtitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Create a new housekeeping staff member with complete details';
-      case 'edit': return 'Update housekeeping staff information and settings';
+      case 'add': return 'Create a new manager with complete details';
+      case 'edit': return 'Update manager information and settings';
       case 'delete': return 'This action cannot be undone';
       default: return '';
     }
@@ -372,23 +400,18 @@ const HouseKeeping = () => {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Sparkles className="h-8 w-8 text-purple-600" />
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Crown className="h-8 w-8 text-green-600" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Housekeeping Management</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Managers Management</h1>
               </div>
-              <p className="text-gray-600">Manage your hotel housekeeping staff members and their roles efficiently</p>
+              <p className="text-gray-600">Manage your hotel managers and their roles efficiently</p>
             </div>
             <div className="flex-shrink-0">
               <button
-                onClick={() => {
-                  console.log('Add housekeeping button clicked');
-                  alert('Button clicked!'); // Visual confirmation
-                  openModal('add');
-                }}
-                className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto cursor-pointer"
+                onClick={() => openModal('add')}
+                className="inline-flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
                 disabled={addLoading}
-                style={{ pointerEvents: 'auto', zIndex: 10 }}
               >
                 {addLoading ? (
                   <>
@@ -398,7 +421,7 @@ const HouseKeeping = () => {
                 ) : (
                   <>
                     <Plus size={20} />
-                    Add Housekeeping Staff
+                    Add Manager
                   </>
                 )}
               </button>
@@ -409,14 +432,14 @@ const HouseKeeping = () => {
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Housekeeping Staff</h2>
-            <p className="text-sm text-gray-600">Use filters to find specific housekeeping staff members quickly</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Managers</h2>
+            <p className="text-sm text-gray-600">Use filters to find specific managers quickly</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="col-span-1 sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Staff
+                Search Managers
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -425,7 +448,7 @@ const HouseKeeping = () => {
                 <input
                   type="text"
                   placeholder="Search by name, email, phone..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
@@ -435,7 +458,7 @@ const HouseKeeping = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
-                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               >
@@ -462,11 +485,11 @@ const HouseKeeping = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Housekeeping</p>
-                <p className="text-2xl font-bold text-gray-900">{housekeeping.length}</p>
+                <p className="text-sm font-medium text-gray-600">Total Managers</p>
+                <p className="text-2xl font-bold text-gray-900">{managers.length}</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-lg">
-                <Sparkles className="h-6 w-6 text-purple-600" />
+              <div className="p-3 bg-green-100 rounded-lg">
+                <Crown className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </div>
@@ -475,7 +498,7 @@ const HouseKeeping = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">{housekeeping.filter(h => h.isActive === true).length}</p>
+                <p className="text-2xl font-bold text-green-600">{managers.filter(m => m.isActive === true).length}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <UserCheck className="h-6 w-6 text-green-600" />
@@ -487,7 +510,7 @@ const HouseKeeping = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-red-600">{housekeeping.filter(h => h.isActive === false).length}</p>
+                <p className="text-2xl font-bold text-red-600">{managers.filter(m => m.isActive === false).length}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-lg">
                 <UserX className="h-6 w-6 text-red-600" />
@@ -500,8 +523,8 @@ const HouseKeeping = () => {
         {getLoading && (
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-4"></div>
-              <p className="text-gray-600">Loading housekeeping staff...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
+              <p className="text-gray-600">Loading managers...</p>
             </div>
           </div>
         )}
@@ -510,11 +533,11 @@ const HouseKeeping = () => {
         {getError && !getLoading && (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading housekeeping staff</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading managers</h3>
             <p className="text-gray-600 mb-6">{getError.message}</p>
             <button
-              onClick={loadHousekeeping}
-              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors gap-2"
+              onClick={loadManagers}
+              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors gap-2"
             >
               <Search size={16} />
               Retry
@@ -522,38 +545,34 @@ const HouseKeeping = () => {
           </div>
         )}
 
-        {/* Housekeeping Grid/List */}
+        {/* Managers Grid/List */}
         {!getLoading && !getError && (
           <>
-            {filteredHousekeeping.length === 0 ? (
+            {filteredManagers.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <Sparkles className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No housekeeping staff found</h3>
-                <p className="text-gray-600 mb-6">Get started by adding your first housekeeping staff member.</p>
+                <Crown className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No managers found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first manager.</p>
                 <button
-                  onClick={() => {
-                   
-                    openModal('add');
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors gap-2 cursor-pointer"
-                  style={{ pointerEvents: 'auto' }}
+                  onClick={() => openModal('add')}
+                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors gap-2"
                 >
                   <Plus size={16} />
-                  Add Housekeeping Staff
+                  Add Manager
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredHousekeeping.map((member) => {
+                {filteredManagers.map((member) => {
                   const statusInfo = getStatusInfo(member.isActive);
 
                   return (
                     <div key={member._id || member.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                       <div className="p-6">
-                        {/* Staff Header */}
+                        {/* Manager Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -647,4 +666,4 @@ const HouseKeeping = () => {
   );
 };
 
-export default HouseKeeping;
+export default Managers;

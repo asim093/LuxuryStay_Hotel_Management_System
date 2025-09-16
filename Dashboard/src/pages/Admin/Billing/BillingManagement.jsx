@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Plus, Download, FileText, Search, Calendar, CheckCircle, XCircle, RefreshCw, CreditCard, ArrowDownLeft, ArrowUpRight, Mail, MoreHorizontal, Eye, DollarSign } from 'lucide-react';
 import { toast } from 'react-toastify';
-import Modal from '../../components/Modal/Modal';
+import Modal from '../../../components/Modal/Modal';
 
 const ActionsDropdown = ({ row, onAction }) => {
   const [isOpen, setIsOpen] = useState(false);

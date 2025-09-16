@@ -21,16 +21,16 @@ import {
   Calendar,
   Shield,
   Settings,
-  Crown,
-  Star
+  MessageSquare,
+  Headphones
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import useCallpostApi from '../../Hooks/useCallpostApi';
-import useCallgetApi from '../../Hooks/useCallgetApi';
-import Modal from '../../components/Modal/Modal';
+import useCallpostApi from '../../../Hooks/useCallpostApi';
+import useCallgetApi from '../../../Hooks/useCallgetApi';
+import Modal from '../../../components/Modal/Modal';
 
-const Managers = () => {
-  const [managers, setManagers] = useState([]);
+const Receptionist = () => {
+  const [receptionists, setReceptionists] = useState([]);
   const [modal, setModal] = useState({
     show: false,
     mode: null,
@@ -100,19 +100,19 @@ const Managers = () => {
   };
 
   useEffect(() => {
-    loadManagers();
+    loadReceptionists();
   }, []);
 
-  const loadManagers = async () => {
-    console.log('loadManagers called - refetching managers data...');
+  const loadReceptionists = async () => {
+    console.log('loadReceptionists called - refetching receptionists data...');
     try {
-      const data = await getApiCall('/api/user/users/Manager', 'GET');
+      const data = await getApiCall('/api/user/users/Receptionist', 'GET');
       if (data && data.users) {
-        console.log('Managers data loaded successfully:', data.users.length, 'managers');
-        setManagers(data.users);
+        console.log('Receptionists data loaded successfully:', data.users.length, 'receptionists');
+        setReceptionists(data.users);
       }
     } catch (error) {
-      console.error('Failed to load managers:', error);
+      console.error('Failed to load receptionists:', error);
     }
   };
 
@@ -163,10 +163,10 @@ const Managers = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleAddManager = async (managerData) => {
-    console.log('handleAddManager called with:', managerData);
+  const handleAddReceptionist = async (receptionistData) => {
+    console.log('handleAddReceptionist called with:', receptionistData);
     
-    if (!validateForm(managerData)) {
+    if (!validateForm(receptionistData)) {
       console.log('Form validation failed');
       // Show toast for validation errors
       const errorMessages = Object.values(formErrors);
@@ -183,19 +183,19 @@ const Managers = () => {
         url: '/api/user/Adduser',
         method: 'POST',
         body: {
-          ...managerData,
-          role: "Manager"
+          ...receptionistData,
+          role: "Receptionist"
         }
       });
       console.log('API call completed');
     } catch (error) {
-      console.error('Add manager error:', error);
-      toast.error('Failed to add manager');
+      console.error('Add receptionist error:', error);
+      toast.error('Failed to add receptionist');
     }
   };
 
-  const handleEditManager = async (managerData) => {
-    if (!validateForm(managerData)) {
+  const handleEditReceptionist = async (receptionistData) => {
+    if (!validateForm(receptionistData)) {
       // Show toast for validation errors
       const errorMessages = Object.values(formErrors);
       if (errorMessages.length > 0) {
@@ -205,34 +205,34 @@ const Managers = () => {
     }
 
     try {
-      if (!managerData.password) {
-        delete managerData.password;
+      if (!receptionistData.password) {
+        delete receptionistData.password;
       }
 
       await editApiCall({
         url: `/api/user/users/${modal.data._id || modal.data.id}`,
         method: 'PUT',
-        body: managerData
+        body: receptionistData
       });
-      loadManagers();
+      loadReceptionists();
       closeModal()
     } catch (error) {
-      console.error('Edit manager error:', error);
-      toast.error('Failed to update manager');
+      console.error('Edit receptionist error:', error);
+      toast.error('Failed to update receptionist');
     }
   };
 
-  const handleDeleteManager = async ({ id }) => {
+  const handleDeleteReceptionist = async ({ id }) => {
     try {
       await deleteApiCall({
         url: `/api/user/${id}/users`,
         method: 'DELETE',
         body: null
       });
-      loadManagers()
+      loadReceptionists()
       closeModal()
     } catch (error) {
-      console.error('Delete manager error:', error);
+      console.error('Delete receptionist error:', error);
     }
   };
 
@@ -240,91 +240,91 @@ const Managers = () => {
     console.log('handleModalSubmit called with mode:', modal.mode, 'data:', data);
     
     if (modal.mode === 'add') {
-      handleAddManager(data);
+      handleAddReceptionist(data);
     } else if (modal.mode === 'edit') {
-      handleEditManager(data);
+      handleEditReceptionist(data);
     } else if (modal.mode === 'delete') {
-      handleDeleteManager(data);
+      handleDeleteReceptionist(data);
     }
   };
 
-  const handleStatusToggle = async (managerId, currentStatus) => {
+  const handleStatusToggle = async (receptionistId, currentStatus) => {
     const newStatus = currentStatus === true ? 'Inactive' : 'Active';
 
     try {
       await statusApiCall({
-        url: `/api/user/users/${managerId}/status`,
+        url: `/api/user/users/${receptionistId}/status`,
         method: 'PATCH',
         body: { status: newStatus }
       });
-      loadManagers()
+      loadReceptionists()
     } catch (error) {
       console.error('Status toggle error:', error);
       toast.error('Failed to update status');
     }
   };
 
-  // Add Manager Success/Error Handlers
+  // Add Receptionist Success/Error Handlers
   useEffect(() => {
     console.log('Add response useEffect triggered:', addResponse);
     if (addResponse) {
       if (addResponse.status === 'success') {
         console.log('Add success - showing toast and closing modal');
-        toast.success('Manager added successfully');
+        toast.success('Receptionist added successfully');
         closeModal();
-        loadManagers();
+        loadReceptionists();
       } else {
         console.log('Add failed:', addResponse.message);
-        toast.error(addResponse.message || 'Failed to add manager');
+        toast.error(addResponse.message || 'Failed to add receptionist');
       }
     }
   }, [addResponse]);
 
   useEffect(() => {
     if (addError) {
-      toast.error(addError.message || 'Failed to add manager');
+      toast.error(addError.message || 'Failed to add receptionist');
     }
   }, [addError]);
 
-  // Edit Manager Success/Error Handlers
+  // Edit Receptionist Success/Error Handlers
   useEffect(() => {
     if (editResponse) {
       if (editResponse.status === 'success') {
-        toast.success('Manager updated successfully');
+        toast.success('Receptionist updated successfully');
         closeModal();
-        loadManagers(); // Direct call, no timeout needed
+        loadReceptionists(); // Direct call, no timeout needed
       } else {
-        toast.error(editResponse.message || 'Failed to update manager');
+        toast.error(editResponse.message || 'Failed to update receptionist');
       }
     }
   }, [editResponse]);
 
   useEffect(() => {
     if (editError) {
-      toast.error(editError.message || 'Failed to update manager');
+      toast.error(editError.message || 'Failed to update receptionist');
     }
   }, [editError]);
 
-  // Delete Manager Success/Error Handlers
+  // Delete Receptionist Success/Error Handlers
   useEffect(() => {
     console.log('Delete response useEffect triggered:', deleteResponse);
     if (deleteResponse) {
       if (deleteResponse.status === 'success') {
         console.log('Delete success - showing toast and closing modal');
-        toast.success('Manager deleted successfully');
+        toast.success('Receptionist deleted successfully');
         closeModal();
-        console.log('Calling loadManagers after delete...');
-        loadManagers();
+        console.log('Calling loadReceptionists after delete...');
+        loadReceptionists();
       } else {
         console.log('Delete failed:', deleteResponse.message);
-        toast.error(deleteResponse.message || 'Failed to delete manager');
+        toast.error(deleteResponse.message || 'Failed to delete receptionist');
       }
     }
   }, [deleteResponse]);
 
   useEffect(() => {
     if (deleteError) {
-      toast.error(deleteError.message || 'Failed to delete manager');
+      toast.error(deleteError.message || 'Failed to delete receptionist');
     }
   }, [deleteError]);
 
@@ -335,8 +335,8 @@ const Managers = () => {
       if (statusResponse.status === 'success') {
         console.log('Status success - showing toast and refetching');
         toast.success('Status updated successfully');
-        console.log('Calling loadManagers after status change...');
-        loadManagers();
+        console.log('Calling loadReceptionists after status change...');
+        loadReceptionists();
       } else {
         console.log('Status failed:', statusResponse.message);
         toast.error(statusResponse.message || 'Failed to update status');
@@ -350,14 +350,14 @@ const Managers = () => {
     }
   }, [statusError]);
 
-  const filteredManagers = managers.filter(m => {
+  const filteredReceptionists = receptionists.filter(r => {
     const matchesSearch = !filters.search ||
-      m.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      m.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      m.phone.includes(filters.search);
+      r.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      r.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      r.phone.includes(filters.search);
 
-    const matchesRole = filters.role === 'all' || m.role === filters.role;
-    const matchesStatus = filters.status === 'all' || m.status === filters.status;
+    const matchesRole = filters.role === 'all' || r.role === filters.role;
+    const matchesStatus = filters.status === 'all' || r.status === filters.status;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -376,17 +376,17 @@ const Managers = () => {
 
   const getModalTitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Add New Manager';
-      case 'edit': return 'Edit Manager';
-      case 'delete': return 'Delete Manager';
+      case 'add': return 'Add New Receptionist';
+      case 'edit': return 'Edit Receptionist';
+      case 'delete': return 'Delete Receptionist';
       default: return '';
     }
   };
 
   const getModalSubtitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Create a new manager with complete details';
-      case 'edit': return 'Update manager information and settings';
+      case 'add': return 'Create a new receptionist with complete details';
+      case 'edit': return 'Update receptionist information and settings';
       case 'delete': return 'This action cannot be undone';
       default: return '';
     }
@@ -400,17 +400,17 @@ const Managers = () => {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <Crown className="h-8 w-8 text-green-600" />
+                <div className="p-2 bg-cyan-100 rounded-lg">
+                  <MessageSquare className="h-8 w-8 text-cyan-600" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Managers Management</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Receptionist Management</h1>
               </div>
-              <p className="text-gray-600">Manage your hotel managers and their roles efficiently</p>
+              <p className="text-gray-600">Manage your hotel receptionists and their roles efficiently</p>
             </div>
             <div className="flex-shrink-0">
               <button
                 onClick={() => openModal('add')}
-                className="inline-flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
+                className="inline-flex items-center justify-center px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
                 disabled={addLoading}
               >
                 {addLoading ? (
@@ -421,7 +421,7 @@ const Managers = () => {
                 ) : (
                   <>
                     <Plus size={20} />
-                    Add Manager
+                    Add Receptionist
                   </>
                 )}
               </button>
@@ -432,14 +432,14 @@ const Managers = () => {
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Managers</h2>
-            <p className="text-sm text-gray-600">Use filters to find specific managers quickly</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Receptionists</h2>
+            <p className="text-sm text-gray-600">Use filters to find specific receptionists quickly</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="col-span-1 sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Managers
+                Search Receptionists
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -448,7 +448,7 @@ const Managers = () => {
                 <input
                   type="text"
                   placeholder="Search by name, email, phone..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
@@ -458,7 +458,7 @@ const Managers = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
-                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               >
@@ -485,11 +485,11 @@ const Managers = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Managers</p>
-                <p className="text-2xl font-bold text-gray-900">{managers.length}</p>
+                <p className="text-sm font-medium text-gray-600">Total Receptionists</p>
+                <p className="text-2xl font-bold text-gray-900">{receptionists.length}</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-lg">
-                <Crown className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-cyan-100 rounded-lg">
+                <MessageSquare className="h-6 w-6 text-cyan-600" />
               </div>
             </div>
           </div>
@@ -498,7 +498,7 @@ const Managers = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">{managers.filter(m => m.isActive === true).length}</p>
+                <p className="text-2xl font-bold text-green-600">{receptionists.filter(r => r.isActive === true).length}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <UserCheck className="h-6 w-6 text-green-600" />
@@ -510,7 +510,7 @@ const Managers = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-red-600">{managers.filter(m => m.isActive === false).length}</p>
+                <p className="text-2xl font-bold text-red-600">{receptionists.filter(r => r.isActive === false).length}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-lg">
                 <UserX className="h-6 w-6 text-red-600" />
@@ -523,8 +523,8 @@ const Managers = () => {
         {getLoading && (
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mb-4"></div>
-              <p className="text-gray-600">Loading managers...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mb-4"></div>
+              <p className="text-gray-600">Loading receptionists...</p>
             </div>
           </div>
         )}
@@ -533,11 +533,11 @@ const Managers = () => {
         {getError && !getLoading && (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading managers</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading receptionists</h3>
             <p className="text-gray-600 mb-6">{getError.message}</p>
             <button
-              onClick={loadManagers}
-              className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors gap-2"
+              onClick={loadReceptionists}
+              className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors gap-2"
             >
               <Search size={16} />
               Retry
@@ -545,34 +545,34 @@ const Managers = () => {
           </div>
         )}
 
-        {/* Managers Grid/List */}
+        {/* Receptionists Grid/List */}
         {!getLoading && !getError && (
           <>
-            {filteredManagers.length === 0 ? (
+            {filteredReceptionists.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <Crown className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No managers found</h3>
-                <p className="text-gray-600 mb-6">Get started by adding your first manager.</p>
+                <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No receptionists found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first receptionist.</p>
                 <button
                   onClick={() => openModal('add')}
-                  className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors gap-2"
+                  className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors gap-2"
                 >
                   <Plus size={16} />
-                  Add Manager
+                  Add Receptionist
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredManagers.map((member) => {
+                {filteredReceptionists.map((member) => {
                   const statusInfo = getStatusInfo(member.isActive);
 
                   return (
                     <div key={member._id || member.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                       <div className="p-6">
-                        {/* Manager Header */}
+                        {/* Receptionist Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -666,4 +666,4 @@ const Managers = () => {
   );
 };
 
-export default Managers;
+export default Receptionist;

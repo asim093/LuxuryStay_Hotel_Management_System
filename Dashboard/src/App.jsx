@@ -3,12 +3,24 @@ import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
-import DashboardLayout from './components/Layout/DashboardLayout';
-import DashboardHome from './pages/Dashboard/DashboardHome';
-import StaffManagement from './pages/Staff/StaffManagement';
-import RoomManagement from './pages/Rooms/RoomManagement';
-import BookingManagement from './pages/Bookings/BookingManagement';
+import DashboardLayout from "./components/Layout/DashboardLayout"
+import DashboardHome from './pages/Admin/Dashboard/DashboardHome'
+import AllUsers from "./pages/Admin/AllUsers/AllUsers"
+import Managers from './pages/Admin/Managers/Managers'
+import HouseKeeping from './pages/Admin/HouseKeeping/HouseKeeping'
+import HousekeepingDashboard from './pages/HouseKeeping/HouseKeepingDashboard/HouseKeepingDashboard'
+import CleaningTasksManagement from './pages/HouseKeeping/CleaningTask/CleaningTask'
 import PlaceholderModule from './components/Placeholder/PlaceholderModule';
+import CompletedRoomsManagement from './pages/HouseKeeping/CleanRooms/CleanRooms'
+import Receptionist from './pages/Admin/Receptionist/Receptionist'
+import Maintenance from './pages/Admin/Maintenance/Maintenance'
+import BillingManagement from './pages/Admin/Billing/BillingManagement'
+import Settings from './pages/Admin/Settings/Settings'
+import StaffManagement from './pages/Admin/Staff/StaffManagement'
+import RoomManagement from './pages/Admin/Rooms/RoomManagement'
+import BookingManagement from './pages/Admin/Bookings/BookingManagement'
+
+
 import { initializeSampleData } from './utils/sampleData';
 import {
   Hotel,
@@ -19,20 +31,17 @@ import {
 import { removeUser } from './store/features/user-slice';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import AllUsers from './pages/AllUsers/AllUsers';
-import Managers from './pages/Managers/Managers';
-import HouseKeeping from './pages/HouseKeeping/HouseKeeping';
-import Receptionist from './pages/Receptionist/Receptionist';
-import Maintenance from './pages/Maintenance/Maintenance';
-import BillingManagement from './pages/Billing/BillingManagement.jsx';
-import Settings from './pages/Settings/Settings.jsx';
+import MaintenanceDashboard from './pages/Maintenance/MaintenanceDashboard/MaintenanceDashboard';
+import MaintenanceTasksPage from './pages/Maintenance/Taskpage/Taskpage';
+import TaskHistoryPage from './pages/Maintenance/Taskhistory/TaskHistory';
+import ReceptionistDashboard from './pages/Receptionist/ReceptionisDashboard/ReceptionistDashboard';
+
 
 function App() {
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((state) => state.user.isLogin);
 
   useEffect(() => {
-    // Initialize sample data
     initializeSampleData();
 
     const token = localStorage.getItem('token');
@@ -110,6 +119,67 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/maintenance-dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <MaintenanceDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task-page"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <MaintenanceTasksPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/task-history"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <TaskHistoryPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reception-dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout onLogout={handleLogout}>
+                <ReceptionistDashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/HouseKeepingDashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout onLogout={handleLogout}>
+              <HousekeepingDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/cleaning-tasks" element={
+          <ProtectedRoute>
+            <DashboardLayout onLogout={handleLogout}>
+              <CleaningTasksManagement />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
+        <Route path="/cleaning-room" element={
+          <ProtectedRoute>
+            <DashboardLayout onLogout={handleLogout}>
+              <CompletedRoomsManagement />
+            </DashboardLayout>
+          </ProtectedRoute>
+        } />
         <Route
           path="/receptionist"
           element={
