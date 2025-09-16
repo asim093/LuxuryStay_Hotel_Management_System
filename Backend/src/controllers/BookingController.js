@@ -2,19 +2,16 @@ import { BookingModel } from "../Models/Booking.model.js";
 import { RoomModel } from "../Models/Room.model.js";
 import { Usermodle } from "../Models/User.model.js";
 
-// Create a new booking
 export const createBooking = async (req, res) => {
   try {
     const bookingData = req.body;
 
-    // Validate required fields
     const { guest, room, checkInDate, checkOutDate, numberOfGuests } = bookingData;
 
     if (!guest || !room || !checkInDate || !checkOutDate || !numberOfGuests) {
       return res.status(400).json({ message: "All required fields must be provided" });
     }
 
-    // Check if room exists and is available
     const roomExists = await RoomModel.findById(room);
     if (!roomExists) {
       return res.status(404).json({ message: "Room not found" });
@@ -28,7 +25,6 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: `Maximum Room Capacity for the number of guests is ${roomExists.capacity}` });
     }
 
-    // Check for date conflicts
     const existingBooking = await BookingModel.findOne({
       room,
       status: { $in: ['Confirmed', 'Checked In'] },
@@ -44,7 +40,6 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Room is already booked for the selected dates" });
     }
 
-    // Calculate total amount
     const nights = Math.ceil((new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24));
     const totalAmount = roomExists.pricePerNight * nights;
 
@@ -167,7 +162,6 @@ export const updateBooking = async (req, res) => {
   }
 };
 
-// Check-in guest
 export const checkIn = async (req, res) => {
   try {
     const { id } = req.params;
@@ -186,7 +180,6 @@ export const checkIn = async (req, res) => {
     booking.notes = notes || booking.notes;
     await booking.save();
 
-    // Update room status
     await RoomModel.findByIdAndUpdate(booking.room, { status: 'Occupied' });
 
     const updatedBooking = await BookingModel.findById(id)
@@ -214,7 +207,6 @@ export const deleteBooking = async (req, res) => {
   }
 }
 
-// Check-out guest
 export const checkOut = async (req, res) => {
   try {
     const { id } = req.params;

@@ -20,17 +20,15 @@ import {
   UserX,
   Calendar,
   Shield,
-  Settings,
-  MessageSquare,
-  Headphones
+  Settings
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import useCallpostApi from '../../Hooks/useCallpostApi';
-import useCallgetApi from '../../Hooks/useCallgetApi';
-import Modal from '../../components/Modal/Modal';
+import useCallpostApi from '../../../Hooks/useCallpostApi';
+import useCallgetApi from '../../../Hooks/useCallgetApi';
+import Modal from '../../../components/Modal/Modal';
 
-const Receptionist = () => {
-  const [receptionists, setReceptionists] = useState([]);
+const StaffManagement = () => {
+  const [staff, setStaff] = useState([]);
   const [modal, setModal] = useState({
     show: false,
     mode: null,
@@ -62,7 +60,6 @@ const Receptionist = () => {
     ApiCall: editApiCall 
   } = useCallpostApi();
   
-  // Delete operation hook
   const { 
     response: deleteResponse, 
     loading: deleteLoading, 
@@ -70,7 +67,6 @@ const Receptionist = () => {
     ApiCall: deleteApiCall 
   } = useCallpostApi();
   
-  // Status toggle hook
   const { 
     response: statusResponse, 
     loading: statusLoading, 
@@ -100,19 +96,19 @@ const Receptionist = () => {
   };
 
   useEffect(() => {
-    loadReceptionists();
+    loadStaff();
   }, []);
 
-  const loadReceptionists = async () => {
-    console.log('loadReceptionists called - refetching receptionists data...');
+  const loadStaff = async () => {
+    console.log('loadStaff called - refetching staff data...');
     try {
-      const data = await getApiCall('/api/user/users/Receptionist', 'GET');
+      const data = await getApiCall('/api/user/users/Staff', 'GET');
       if (data && data.users) {
-        console.log('Receptionists data loaded successfully:', data.users.length, 'receptionists');
-        setReceptionists(data.users);
+        console.log('Staff data loaded successfully:', data.users.length, 'staff members');
+        setStaff(data.users);
       }
     } catch (error) {
-      console.error('Failed to load receptionists:', error);
+      console.error('Failed to load staff:', error);
     }
   };
 
@@ -163,10 +159,10 @@ const Receptionist = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const handleAddReceptionist = async (receptionistData) => {
-    console.log('handleAddReceptionist called with:', receptionistData);
+  const handleAddStaff = async (staffData) => {
+    console.log('handleAddStaff called with:', staffData);
     
-    if (!validateForm(receptionistData)) {
+    if (!validateForm(staffData)) {
       console.log('Form validation failed');
       // Show toast for validation errors
       const errorMessages = Object.values(formErrors);
@@ -183,19 +179,19 @@ const Receptionist = () => {
         url: '/api/user/Adduser',
         method: 'POST',
         body: {
-          ...receptionistData,
-          role: "Receptionist"
+          ...staffData,
+          role: "Staff"
         }
       });
       console.log('API call completed');
     } catch (error) {
-      console.error('Add receptionist error:', error);
-      toast.error('Failed to add receptionist');
+      console.error('Add staff error:', error);
+      toast.error('Failed to add staff member');
     }
   };
 
-  const handleEditReceptionist = async (receptionistData) => {
-    if (!validateForm(receptionistData)) {
+  const handleEditStaff = async (staffData) => {
+    if (!validateForm(staffData)) {
       // Show toast for validation errors
       const errorMessages = Object.values(formErrors);
       if (errorMessages.length > 0) {
@@ -205,34 +201,34 @@ const Receptionist = () => {
     }
 
     try {
-      if (!receptionistData.password) {
-        delete receptionistData.password;
+      if (!staffData.password) {
+        delete staffData.password;
       }
 
       await editApiCall({
         url: `/api/user/users/${modal.data._id || modal.data.id}`,
         method: 'PUT',
-        body: receptionistData
+        body: staffData
       });
-      loadReceptionists();
+      loadStaff();
       closeModal()
     } catch (error) {
-      console.error('Edit receptionist error:', error);
-      toast.error('Failed to update receptionist');
+      console.error('Edit staff error:', error);
+      toast.error('Failed to update staff member');
     }
   };
 
-  const handleDeleteReceptionist = async ({ id }) => {
+  const handleDeleteStaff = async ({ id }) => {
     try {
       await deleteApiCall({
         url: `/api/user/${id}/users`,
         method: 'DELETE',
         body: null
       });
-      loadReceptionists()
+      loadStaff()
       closeModal()
     } catch (error) {
-      console.error('Delete receptionist error:', error);
+      console.error('Delete staff error:', error);
     }
   };
 
@@ -240,91 +236,91 @@ const Receptionist = () => {
     console.log('handleModalSubmit called with mode:', modal.mode, 'data:', data);
     
     if (modal.mode === 'add') {
-      handleAddReceptionist(data);
+      handleAddStaff(data);
     } else if (modal.mode === 'edit') {
-      handleEditReceptionist(data);
+      handleEditStaff(data);
     } else if (modal.mode === 'delete') {
-      handleDeleteReceptionist(data);
+      handleDeleteStaff(data);
     }
   };
 
-  const handleStatusToggle = async (receptionistId, currentStatus) => {
+  const handleStatusToggle = async (staffId, currentStatus) => {
     const newStatus = currentStatus === true ? 'Inactive' : 'Active';
 
     try {
       await statusApiCall({
-        url: `/api/user/users/${receptionistId}/status`,
+        url: `/api/user/users/${staffId}/status`,
         method: 'PATCH',
         body: { status: newStatus }
       });
-      loadReceptionists()
+      loadStaff()
     } catch (error) {
       console.error('Status toggle error:', error);
       toast.error('Failed to update status');
     }
   };
 
-  // Add Receptionist Success/Error Handlers
+  // Add Staff Success/Error Handlers
   useEffect(() => {
     console.log('Add response useEffect triggered:', addResponse);
     if (addResponse) {
       if (addResponse.status === 'success') {
         console.log('Add success - showing toast and closing modal');
-        toast.success('Receptionist added successfully');
+        toast.success('Staff member added successfully');
         closeModal();
-        loadReceptionists();
+        loadStaff();
       } else {
         console.log('Add failed:', addResponse.message);
-        toast.error(addResponse.message || 'Failed to add receptionist');
+        toast.error(addResponse.message || 'Failed to add staff member');
       }
     }
   }, [addResponse]);
 
   useEffect(() => {
     if (addError) {
-      toast.error(addError.message || 'Failed to add receptionist');
+      toast.error(addError.message || 'Failed to add staff member');
     }
   }, [addError]);
 
-  // Edit Receptionist Success/Error Handlers
+  // Edit Staff Success/Error Handlers
   useEffect(() => {
     if (editResponse) {
       if (editResponse.status === 'success') {
-        toast.success('Receptionist updated successfully');
+        toast.success('Staff member updated successfully');
         closeModal();
-        loadReceptionists(); // Direct call, no timeout needed
+        loadStaff(); // Direct call, no timeout needed
       } else {
-        toast.error(editResponse.message || 'Failed to update receptionist');
+        toast.error(editResponse.message || 'Failed to update staff member');
       }
     }
   }, [editResponse]);
 
   useEffect(() => {
     if (editError) {
-      toast.error(editError.message || 'Failed to update receptionist');
+      toast.error(editError.message || 'Failed to update staff member');
     }
   }, [editError]);
 
-  // Delete Receptionist Success/Error Handlers
+  // Delete Staff Success/Error Handlers
   useEffect(() => {
     console.log('Delete response useEffect triggered:', deleteResponse);
     if (deleteResponse) {
       if (deleteResponse.status === 'success') {
         console.log('Delete success - showing toast and closing modal');
-        toast.success('Receptionist deleted successfully');
+        toast.success('Staff member deleted successfully');
         closeModal();
-        console.log('Calling loadReceptionists after delete...');
-        loadReceptionists();
+        console.log('Calling loadStaff after delete...');
+        loadStaff();
       } else {
         console.log('Delete failed:', deleteResponse.message);
-        toast.error(deleteResponse.message || 'Failed to delete receptionist');
+        toast.error(deleteResponse.message || 'Failed to delete staff member');
       }
     }
   }, [deleteResponse]);
 
   useEffect(() => {
     if (deleteError) {
-      toast.error(deleteError.message || 'Failed to delete receptionist');
+      toast.error(deleteError.message || 'Failed to delete staff member');
     }
   }, [deleteError]);
 
@@ -335,8 +331,8 @@ const Receptionist = () => {
       if (statusResponse.status === 'success') {
         console.log('Status success - showing toast and refetching');
         toast.success('Status updated successfully');
-        console.log('Calling loadReceptionists after status change...');
-        loadReceptionists();
+        console.log('Calling loadStaff after status change...');
+        loadStaff();
       } else {
         console.log('Status failed:', statusResponse.message);
         toast.error(statusResponse.message || 'Failed to update status');
@@ -350,14 +346,14 @@ const Receptionist = () => {
     }
   }, [statusError]);
 
-  const filteredReceptionists = receptionists.filter(r => {
+  const filteredStaff = staff.filter(s => {
     const matchesSearch = !filters.search ||
-      r.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      r.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      r.phone.includes(filters.search);
+      s.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      s.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      s.phone.includes(filters.search);
 
-    const matchesRole = filters.role === 'all' || r.role === filters.role;
-    const matchesStatus = filters.status === 'all' || r.status === filters.status;
+    const matchesRole = filters.role === 'all' || s.role === filters.role;
+    const matchesStatus = filters.status === 'all' || s.status === filters.status;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -376,17 +372,17 @@ const Receptionist = () => {
 
   const getModalTitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Add New Receptionist';
-      case 'edit': return 'Edit Receptionist';
-      case 'delete': return 'Delete Receptionist';
+      case 'add': return 'Add New Staff Member';
+      case 'edit': return 'Edit Staff Member';
+      case 'delete': return 'Delete Staff Member';
       default: return '';
     }
   };
 
   const getModalSubtitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Create a new receptionist with complete details';
-      case 'edit': return 'Update receptionist information and settings';
+      case 'add': return 'Create a new staff member with complete details';
+      case 'edit': return 'Update staff member information and settings';
       case 'delete': return 'This action cannot be undone';
       default: return '';
     }
@@ -399,18 +395,13 @@ const Receptionist = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-cyan-100 rounded-lg">
-                  <MessageSquare className="h-8 w-8 text-cyan-600" />
-                </div>
-                <h1 className="text-3xl font-bold text-gray-900">Receptionist Management</h1>
-              </div>
-              <p className="text-gray-600">Manage your hotel receptionists and their roles efficiently</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Staff Management</h1>
+              <p className="text-gray-600">Manage your hotel staff members and their roles efficiently</p>
             </div>
             <div className="flex-shrink-0">
               <button
                 onClick={() => openModal('add')}
-                className="inline-flex items-center justify-center px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
+                className="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
                 disabled={addLoading}
               >
                 {addLoading ? (
@@ -421,7 +412,7 @@ const Receptionist = () => {
                 ) : (
                   <>
                     <Plus size={20} />
-                    Add Receptionist
+                    Add Staff Member
                   </>
                 )}
               </button>
@@ -432,14 +423,14 @@ const Receptionist = () => {
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Receptionists</h2>
-            <p className="text-sm text-gray-600">Use filters to find specific receptionists quickly</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Staff</h2>
+            <p className="text-sm text-gray-600">Use filters to find specific staff members quickly</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="col-span-1 sm:col-span-2 lg:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Search Receptionists
+                Search Staff
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -448,7 +439,7 @@ const Receptionist = () => {
                 <input
                   type="text"
                   placeholder="Search by name, email, phone..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
@@ -458,7 +449,7 @@ const Receptionist = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
-                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-colors"
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               >
@@ -485,11 +476,11 @@ const Receptionist = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Receptionists</p>
-                <p className="text-2xl font-bold text-gray-900">{receptionists.length}</p>
+                <p className="text-sm font-medium text-gray-600">Total Staff</p>
+                <p className="text-2xl font-bold text-gray-900">{staff.length}</p>
               </div>
-              <div className="p-3 bg-cyan-100 rounded-lg">
-                <MessageSquare className="h-6 w-6 text-cyan-600" />
+              <div className="p-3 bg-blue-100 rounded-lg">
+                <Users className="h-6 w-6 text-blue-600" />
               </div>
             </div>
           </div>
@@ -498,7 +489,7 @@ const Receptionist = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">{receptionists.filter(r => r.isActive === true).length}</p>
+                <p className="text-2xl font-bold text-green-600">{staff.filter(s => s.isActive === true).length}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <UserCheck className="h-6 w-6 text-green-600" />
@@ -510,7 +501,7 @@ const Receptionist = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-red-600">{receptionists.filter(r => r.isActive === false).length}</p>
+                <p className="text-2xl font-bold text-red-600">{staff.filter(s => s.isActive === false).length}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-lg">
                 <UserX className="h-6 w-6 text-red-600" />
@@ -523,8 +514,8 @@ const Receptionist = () => {
         {getLoading && (
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mb-4"></div>
-              <p className="text-gray-600">Loading receptionists...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-4"></div>
+              <p className="text-gray-600">Loading staff...</p>
             </div>
           </div>
         )}
@@ -533,11 +524,11 @@ const Receptionist = () => {
         {getError && !getLoading && (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading receptionists</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading staff</h3>
             <p className="text-gray-600 mb-6">{getError.message}</p>
             <button
-              onClick={loadReceptionists}
-              className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors gap-2"
+              onClick={loadStaff}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors gap-2"
             >
               <Search size={16} />
               Retry
@@ -545,34 +536,34 @@ const Receptionist = () => {
           </div>
         )}
 
-        {/* Receptionists Grid/List */}
+        {/* Staff Grid/List */}
         {!getLoading && !getError && (
           <>
-            {filteredReceptionists.length === 0 ? (
+            {filteredStaff.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <MessageSquare className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No receptionists found</h3>
-                <p className="text-gray-600 mb-6">Get started by adding your first receptionist.</p>
+                <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No staff members found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first staff member.</p>
                 <button
                   onClick={() => openModal('add')}
-                  className="inline-flex items-center px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors gap-2"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors gap-2"
                 >
                   <Plus size={16} />
-                  Add Receptionist
+                  Add Staff Member
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredReceptionists.map((member) => {
+                {filteredStaff.map((member) => {
                   const statusInfo = getStatusInfo(member.isActive);
 
                   return (
                     <div key={member._id || member.id} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
                       <div className="p-6">
-                        {/* Receptionist Header */}
+                        {/* Staff Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -605,8 +596,8 @@ const Receptionist = () => {
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700"></div>
                             ) : (
                               <>
-                                <Edit size={16} />
-                                Edit
+                            <Edit size={16} />
+                            Edit
                               </>
                             )}
                           </button>
@@ -634,7 +625,7 @@ const Receptionist = () => {
                             {deleteLoading ? (
                               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-700"></div>
                             ) : (
-                              <Trash2 size={16} />
+                            <Trash2 size={16} />
                             )}
                           </button>
                         </div>
@@ -666,4 +657,4 @@ const Receptionist = () => {
   );
 };
 
-export default Receptionist;
+export default StaffManagement;

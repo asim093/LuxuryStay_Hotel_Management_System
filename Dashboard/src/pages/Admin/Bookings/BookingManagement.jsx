@@ -22,7 +22,7 @@ import {
   ArrowUpDown
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import Modal from '../../components/Modal/Modal';
+import Modal from '../../../components/Modal/Modal';
 import swal from 'sweetalert';
 
 const BookingManagement = () => {

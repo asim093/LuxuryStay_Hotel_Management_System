@@ -13,7 +13,6 @@ import {
   Building,
   CheckCircle,
   XCircle,
-  X,
   Check,
   AlertCircle,
   UserCheck,
@@ -21,15 +20,16 @@ import {
   Calendar,
   Shield,
   Settings,
-  Wrench,
+  Home,
+  Sparkles
 } from 'lucide-react';
 import { toast } from 'react-toastify';
-import useCallpostApi from '../../Hooks/useCallpostApi';
-import useCallgetApi from '../../Hooks/useCallgetApi';
-import Modal from '../../components/Modal/Modal';
+import useCallpostApi from '../../../Hooks/useCallpostApi';
+import useCallgetApi from '../../../Hooks/useCallgetApi';
+import Modal from '../../../components/Modal/Modal';
 
-const Maintenance = () => {
-  const [maintenance, setMaintenance] = useState([]);
+const HouseKeeping = () => {
+  const [housekeeping, setHousekeeping] = useState([]);
   const [modal, setModal] = useState({
     show: false,
     mode: null,
@@ -99,19 +99,17 @@ const Maintenance = () => {
   };
 
   useEffect(() => {
-    loadMaintenance();
+    loadHousekeeping();
   }, []);
 
-  const loadMaintenance = async () => {
-    console.log('loadMaintenance called - refetching maintenance data...');
+  const loadHousekeeping = async () => {
     try {
-      const data = await getApiCall('/api/user/users/Maintenance', 'GET');
+      const data = await getApiCall('/api/user/users/Housekeeping', 'GET');
       if (data && data.users) {
-        console.log('Maintenance data loaded successfully:', data.users.length, 'maintenance staff members');
-        setMaintenance(data.users);
+        setHousekeeping(data.users);
       }
     } catch (error) {
-      console.error('Failed to load maintenance staff:', error);
+      console.error('Failed to load housekeeping staff:', error);
     }
   };
 
@@ -129,153 +127,126 @@ const Maintenance = () => {
   const validateForm = (formData) => {
     const errors = {};
 
-    console.log('Validating form data:', formData);
-    console.log('Modal mode:', modal.mode);
-
     if (!formData.name.trim()) {
       errors.name = 'Full name is required';
-      console.log('Name validation failed');
     }
 
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
-      console.log('Email validation failed - empty');
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Please enter a valid email';
-      console.log('Email validation failed - invalid format');
     }
 
     if (!formData.phone.trim()) {
       errors.phone = 'Phone number is required';
-      console.log('Phone validation failed');
     }
 
     if (modal.mode === 'add' && (!formData.password || formData.password.length < 6)) {
       errors.password = 'Password is required and must be at least 6 characters';
-      console.log('Password validation failed - add mode, password too short or missing');
     } else if (formData.password && formData.password.length < 6) {
       errors.password = 'Password must be at least 6 characters';
-      console.log('Password validation failed - password too short');
     }
 
-    console.log('Validation errors:', errors);
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-
-  const handleAddMaintenance = async (maintenanceData) => {
-    console.log('handleAddMaintenance called with:', maintenanceData);
-    
-    if (!validateForm(maintenanceData)) {
+  const handleAddHousekeeping = async (housekeepingData) => {
+    console.log('handleAddHousekeeping called with:', housekeepingData);
+    if (!validateForm(housekeepingData)) {
       console.log('Form validation failed');
-      // Show toast for validation errors
-      const errorMessages = Object.values(formErrors);
-      if (errorMessages.length > 0) {
-        toast.error(`Validation failed: ${errorMessages.join(', ')}`);
-      }
       return;
     }
 
-    console.log('Form validation passed, making API call...');
-
     try {
+      console.log('Making API call for add housekeeping');
       await addApiCall({
         url: '/api/user/Adduser',
         method: 'POST',
         body: {
-          ...maintenanceData,
-          role: "Maintenance"
+          ...housekeepingData,
+          role: "Housekeeping"
         }
       });
       console.log('API call completed');
     } catch (error) {
-      console.error('Add maintenance error:', error);
-      toast.error('Failed to add maintenance staff member');
+      console.error('Add housekeeping error:', error);
     }
   };
 
-  const handleEditMaintenance = async (maintenanceData) => {
-    if (!validateForm(maintenanceData)) {
-      // Show toast for validation errors
-      const errorMessages = Object.values(formErrors);
-      if (errorMessages.length > 0) {
-        toast.error(`Validation failed: ${errorMessages.join(', ')}`);
-      }
-      return;
-    }
+  const handleEditHousekeeping = async (housekeepingData) => {
+    if (!validateForm(housekeepingData)) return;
 
     try {
-      if (!maintenanceData.password) {
-        delete maintenanceData.password;
+      if (!housekeepingData.password) {
+        delete housekeepingData.password;
       }
 
       await editApiCall({
         url: `/api/user/users/${modal.data._id || modal.data.id}`,
         method: 'PUT',
-        body: maintenanceData
+        body: housekeepingData
       });
-      loadMaintenance()
+      loadHousekeeping();
       closeModal()
     } catch (error) {
-      console.error('Edit maintenance error:', error);
-      toast.error('Failed to update maintenance staff member');
+      console.error('Edit housekeeping error:', error);
     }
   };
 
-  const handleDeleteMaintenance = async ({ id }) => {
+  const handleDeleteHousekeeping = async ({ id }) => {
     try {
       await deleteApiCall({
         url: `/api/user/${id}/users`,
         method: 'DELETE',
         body: null
       });
-      loadMaintenance()
+      loadHousekeeping();
       closeModal()
     } catch (error) {
-      console.error('Delete maintenance error:', error);
+      console.error('Delete housekeeping error:', error);
     }
   };
 
   const handleModalSubmit = (data) => {
     console.log('handleModalSubmit called with:', data, 'mode:', modal.mode);
     if (modal.mode === 'add') {
-      handleAddMaintenance(data);
+      handleAddHousekeeping(data);
     } else if (modal.mode === 'edit') {
-      handleEditMaintenance(data);
+      handleEditHousekeeping(data);
     } else if (modal.mode === 'delete') {
-      handleDeleteMaintenance(data);
+      handleDeleteHousekeeping(data);
     }
   };
 
-  const handleStatusToggle = async (maintenanceId, currentStatus) => {
+  const handleStatusToggle = async (housekeepingId, currentStatus) => {
     const newStatus = currentStatus === true ? 'Inactive' : 'Active';
 
     try {
       await statusApiCall({
-        url: `/api/user/users/${maintenanceId}/status`,
+        url: `/api/user/users/${housekeepingId}/status`,
         method: 'PATCH',
         body: { status: newStatus }
       });
-      loadMaintenance()
+      loadHousekeeping();
+      closeModal()
     } catch (error) {
       console.error('Status toggle error:', error);
-      toast.error('Failed to update status');
     }
   };
 
-  // Add Maintenance Success/Error Handlers
   useEffect(() => {
-    console.log('Add response useEffect triggered:', addResponse);
+    console.log('addResponse useEffect triggered:', addResponse);
     if (addResponse) {
       if (addResponse.status === 'success') {
-        console.log('Add success - showing toast and closing modal');
-        toast.success('Maintenance staff added successfully');
+        toast.success('Housekeeping staff added successfully');
         closeModal();
-        loadMaintenance();
+        // Force refetch after add
+        setTimeout(() => {
+          loadHousekeeping();
+        }, 100);
       } else {
-        console.log('Add failed:', addResponse.message);
-        toast.error(addResponse.message || 'Failed to add maintenance staff');
+        toast.error(addResponse.message || 'Failed to add housekeeping staff');
       }
     }
   }, [addResponse]);
@@ -283,66 +254,63 @@ const Maintenance = () => {
   useEffect(() => {
     console.log('addError useEffect triggered:', addError);
     if (addError) {
-      toast.error(addError.message || 'Failed to add maintenance staff');
+      toast.error(addError.message || 'Failed to add housekeeping staff');
     }
   }, [addError]);
 
-  // Edit Maintenance Success/Error Handlers
+  // Edit Housekeeping Success/Error Handlers
   useEffect(() => {
-    console.log('Edit response useEffect triggered:', editResponse);
     if (editResponse) {
       if (editResponse.status === 'success') {
-        console.log('Edit success - showing toast and closing modal');
-        toast.success('Maintenance staff updated successfully');
+        toast.success('Housekeeping staff updated successfully');
         closeModal();
-        loadMaintenance();
+        // Force refetch after edit
+        setTimeout(() => {
+          loadHousekeeping();
+        }, 100);
       } else {
-        console.log('Edit failed:', editResponse.message);
-        toast.error(editResponse.message || 'Failed to update maintenance staff');
+        toast.error(editResponse.message || 'Failed to update housekeeping staff');
       }
     }
   }, [editResponse]);
 
   useEffect(() => {
     if (editError) {
-      toast.error(editError.message || 'Failed to update maintenance staff');
+      toast.error(editError.message || 'Failed to update housekeeping staff');
     }
   }, [editError]);
 
-  // Delete Maintenance Success/Error Handlers
+  // Delete Housekeeping Success/Error Handlers
   useEffect(() => {
-    console.log('Delete response useEffect triggered:', deleteResponse);
     if (deleteResponse) {
       if (deleteResponse.status === 'success') {
-        console.log('Delete success - showing toast and closing modal');
-        toast.success('Maintenance staff deleted successfully');
-        closeModal();
-        console.log('Calling loadMaintenance after delete...');
-        loadMaintenance();
+        toast.success('Housekeeping staff deleted successfully');
+        closeModal(); // ✅ Modal close karo
+        setTimeout(() => {
+          loadHousekeeping(); // ✅ Data refetch with slight delay
+        }, 100);
       } else {
-        console.log('Delete failed:', deleteResponse.message);
-        toast.error(deleteResponse.message || 'Failed to delete maintenance staff');
+        toast.error(deleteResponse.message || 'Failed to delete housekeeping staff');
       }
     }
   }, [deleteResponse]);
 
   useEffect(() => {
     if (deleteError) {
-      toast.error(deleteError.message || 'Failed to delete maintenance staff');
+      toast.error(deleteError.message || 'Failed to delete housekeeping staff');
     }
   }, [deleteError]);
 
   // Status Toggle Success/Error Handlers
   useEffect(() => {
-    console.log('Status response useEffect triggered:', statusResponse);
     if (statusResponse) {
       if (statusResponse.status === 'success') {
-        console.log('Status success - showing toast and refetching');
         toast.success('Status updated successfully');
-        console.log('Calling loadMaintenance after status change...');
-        loadMaintenance();
+        // Force refetch after status change
+        setTimeout(() => {
+          loadHousekeeping();
+        }, 100);
       } else {
-        console.log('Status failed:', statusResponse.message);
         toast.error(statusResponse.message || 'Failed to update status');
       }
     }
@@ -354,14 +322,14 @@ const Maintenance = () => {
     }
   }, [statusError]);
 
-  const filteredMaintenance = maintenance.filter(m => {
+  const filteredHousekeeping = housekeeping.filter(h => {
     const matchesSearch = !filters.search ||
-      m.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-      m.email.toLowerCase().includes(filters.search.toLowerCase()) ||
-      m.phone.includes(filters.search);
+      h.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+      h.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+      h.phone.includes(filters.search);
 
-    const matchesRole = filters.role === 'all' || m.role === filters.role;
-    const matchesStatus = filters.status === 'all' || m.status === filters.status;
+    const matchesRole = filters.role === 'all' || h.role === filters.role;
+    const matchesStatus = filters.status === 'all' || h.status === filters.status;
 
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -380,17 +348,17 @@ const Maintenance = () => {
 
   const getModalTitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Add New Maintenance Staff';
-      case 'edit': return 'Edit Maintenance Staff';
-      case 'delete': return 'Delete Maintenance Staff';
+      case 'add': return 'Add New Housekeeping Staff';
+      case 'edit': return 'Edit Housekeeping Staff';
+      case 'delete': return 'Delete Housekeeping Staff';
       default: return '';
     }
   };
 
   const getModalSubtitle = () => {
     switch (modal.mode) {
-      case 'add': return 'Create a new maintenance staff member with complete details';
-      case 'edit': return 'Update maintenance staff information and settings';
+      case 'add': return 'Create a new housekeeping staff member with complete details';
+      case 'edit': return 'Update housekeeping staff information and settings';
       case 'delete': return 'This action cannot be undone';
       default: return '';
     }
@@ -404,19 +372,21 @@ const Maintenance = () => {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Wrench className="h-8 w-8 text-orange-600" />
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Sparkles className="h-8 w-8 text-purple-600" />
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900">Maintenance Management</h1>
+                <h1 className="text-3xl font-bold text-gray-900">Housekeeping Management</h1>
               </div>
-              <p className="text-gray-600">Manage your hotel maintenance staff members and their roles efficiently</p>
+              <p className="text-gray-600">Manage your hotel housekeeping staff members and their roles efficiently</p>
             </div>
             <div className="flex-shrink-0">
               <button
                 onClick={() => {
+                  console.log('Add housekeeping button clicked');
+                  alert('Button clicked!'); // Visual confirmation
                   openModal('add');
                 }}
-                className="inline-flex items-center justify-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto cursor-pointer"
+                className="inline-flex items-center justify-center px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto cursor-pointer"
                 disabled={addLoading}
                 style={{ pointerEvents: 'auto', zIndex: 10 }}
               >
@@ -428,7 +398,7 @@ const Maintenance = () => {
                 ) : (
                   <>
                     <Plus size={20} />
-                    Add Maintenance Staff
+                    Add Housekeeping Staff
                   </>
                 )}
               </button>
@@ -439,8 +409,8 @@ const Maintenance = () => {
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Maintenance Staff</h2>
-            <p className="text-sm text-gray-600">Use filters to find specific maintenance staff members quickly</p>
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Filter Housekeeping Staff</h2>
+            <p className="text-sm text-gray-600">Use filters to find specific housekeeping staff members quickly</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -455,7 +425,7 @@ const Maintenance = () => {
                 <input
                   type="text"
                   placeholder="Search by name, email, phone..."
-                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 />
@@ -465,7 +435,7 @@ const Maintenance = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
               <select
-                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
                 value={filters.status}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
               >
@@ -492,11 +462,11 @@ const Maintenance = () => {
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Maintenance</p>
-                <p className="text-2xl font-bold text-gray-900">{maintenance.length}</p>
+                <p className="text-sm font-medium text-gray-600">Total Housekeeping</p>
+                <p className="text-2xl font-bold text-gray-900">{housekeeping.length}</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-lg">
-                <Wrench className="h-6 w-6 text-orange-600" />
+              <div className="p-3 bg-purple-100 rounded-lg">
+                <Sparkles className="h-6 w-6 text-purple-600" />
               </div>
             </div>
           </div>
@@ -505,7 +475,7 @@ const Maintenance = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active</p>
-                <p className="text-2xl font-bold text-green-600">{maintenance.filter(m => m.isActive === true).length}</p>
+                <p className="text-2xl font-bold text-green-600">{housekeeping.filter(h => h.isActive === true).length}</p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
                 <UserCheck className="h-6 w-6 text-green-600" />
@@ -517,7 +487,7 @@ const Maintenance = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Inactive</p>
-                <p className="text-2xl font-bold text-red-600">{maintenance.filter(m => m.isActive === false).length}</p>
+                <p className="text-2xl font-bold text-red-600">{housekeeping.filter(h => h.isActive === false).length}</p>
               </div>
               <div className="p-3 bg-red-100 rounded-lg">
                 <UserX className="h-6 w-6 text-red-600" />
@@ -530,8 +500,8 @@ const Maintenance = () => {
         {getLoading && (
           <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-sm border border-gray-200">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mb-4"></div>
-              <p className="text-gray-600">Loading maintenance staff...</p>
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mb-4"></div>
+              <p className="text-gray-600">Loading housekeeping staff...</p>
             </div>
           </div>
         )}
@@ -540,11 +510,11 @@ const Maintenance = () => {
         {getError && !getLoading && (
           <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
             <AlertCircle className="mx-auto h-12 w-12 text-red-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading maintenance staff</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Error loading housekeeping staff</h3>
             <p className="text-gray-600 mb-6">{getError.message}</p>
             <button
-              onClick={loadMaintenance}
-              className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors gap-2"
+              onClick={loadHousekeeping}
+              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors gap-2"
             >
               <Search size={16} />
               Retry
@@ -552,28 +522,29 @@ const Maintenance = () => {
           </div>
         )}
 
-        {/* Maintenance Grid/List */}
+        {/* Housekeeping Grid/List */}
         {!getLoading && !getError && (
           <>
-            {filteredMaintenance.length === 0 ? (
+            {filteredHousekeeping.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
-                <Wrench className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No maintenance staff found</h3>
-                <p className="text-gray-600 mb-6">Get started by adding your first maintenance staff member.</p>
+                <Sparkles className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No housekeeping staff found</h3>
+                <p className="text-gray-600 mb-6">Get started by adding your first housekeeping staff member.</p>
                 <button
                   onClick={() => {
+                   
                     openModal('add');
                   }}
-                  className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors gap-2 cursor-pointer"
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors gap-2 cursor-pointer"
                   style={{ pointerEvents: 'auto' }}
                 >
                   <Plus size={16} />
-                  Add Maintenance Staff
+                  Add Housekeeping Staff
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredMaintenance.map((member) => {
+                {filteredHousekeeping.map((member) => {
                   const statusInfo = getStatusInfo(member.isActive);
 
                   return (
@@ -582,7 +553,7 @@ const Maintenance = () => {
                         {/* Staff Header */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
+                            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-semibold text-lg">
                               {member.name.charAt(0).toUpperCase()}
                             </div>
                             <div>
@@ -676,4 +647,4 @@ const Maintenance = () => {
   );
 };
 
-export default Maintenance;
+export default HouseKeeping;

@@ -1,11 +1,9 @@
 import { RoomModel } from "../Models/Room.model.js";
 
-// Create a new room
 export const createRoom = async (req, res) => {
   try {
     const roomData = req.body;
     
-    // Check if room number already exists
     const existingRoom = await RoomModel.findOne({ roomNumber: roomData.roomNumber });
     if (existingRoom) {
       return res.status(400).json({ message: "Room number already exists" });
@@ -133,7 +131,6 @@ export const deleteRoom = async (req, res) => {
   }
 };
 
-// Update room status
 export const updateRoomStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -161,7 +158,6 @@ export const updateRoomStatus = async (req, res) => {
   }
 };
 
-// Get available rooms for booking
 export const getAvailableRooms = async (req, res) => {
   try {
     const { checkInDate, checkOutDate, roomType, guests } = req.query;

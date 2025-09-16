@@ -6,19 +6,30 @@ import { addUser } from '../../store/features/user-slice';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-
-
 const Login = ({ onSwitchToSignup }) => {
   const dispatch = useDispatch();
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const { response, loading, error, ApiCall } = useCallpostApi();
+
+  const getRoleBasedRoute = (userRole) => {
+    const roleRoutes = {
+      Admin: '/dashboard',
+      Manager: '/dashboard',
+      Staff: '/dashboard',
+      Receptionist: '/checkin-checkout',
+      Maintenance: '/maintenance-dashboard',
+      Housekeeping: '/HouseKeepingDashboard',
+      Guest: '/my-reservations'
+    };
+
+    return roleRoutes[userRole] || '/dashboard';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -34,23 +45,40 @@ const Login = ({ onSwitchToSignup }) => {
     if (response) {
       console.log('Login response:', response);
 
-      // Token will be stored in Redux state
-      if (response.user && response.user.token) {
-        console.log('Token received:', response.user.token.substring(0, 20) + '...');
-      } else {
-        console.error('No token in response:', response);
+      let userData = null;
+
+      if (response.user) {
+        userData = response.user;
+      } else if (response.data) {
+        userData = response.data.user;
+      } else if (response.data?.data?.user) {
+        userData = response.data.data.user;
       }
 
-      dispatch(addUser(response));
-      toast.success("Login successful");
-      setTimeout(() => {
-        Navigate("/dashboard");
-      }, 100);
+      if (userData && userData.token) {
+        console.log('Token received:', userData.token.substring(0, 20) + '...');
+        console.log('User role:', userData.role);
+
+        dispatch(addUser(response));
+
+        toast.success(`Welcome back, ${userData.name || 'User'}!`);
+
+        const targetRoute = getRoleBasedRoute(userData.role);
+        console.log('Navigating to:', targetRoute);
+
+        setTimeout(() => {
+          navigate(targetRoute);
+        }, 100);
+      } else {
+        console.error('No token in response:', response);
+        toast.error('Login failed - invalid response');
+      }
     }
-  }, [response, dispatch]);
+  }, [response, dispatch, navigate]);
 
   useEffect(() => {
     if (error) {
+      console.error('Login error:', error);
       toast.error("Invalid credentials");
     }
   }, [error]);
@@ -66,7 +94,7 @@ const Login = ({ onSwitchToSignup }) => {
             Welcome Back
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to your LuxuryStay Admin Dashboard
+            Sign in to your LuxuryStay Dashboard
           </p>
         </div>
 
@@ -86,7 +114,7 @@ const Login = ({ onSwitchToSignup }) => {
                   type="email"
                   required
                   className="input input-bordered w-full pl-10"
-                  placeholder="admin@luxurystay.com"
+                  placeholder="Enter your email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
@@ -160,12 +188,6 @@ const Login = ({ onSwitchToSignup }) => {
               </p>
             </div>
           </form>
-        </div>
-
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            Demo Credentials: admin@luxurystay.com / admin123
-          </p>
         </div>
       </div>
     </div>
