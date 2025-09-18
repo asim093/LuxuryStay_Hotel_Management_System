@@ -1,6 +1,6 @@
 "use client"
 import { useState, useEffect } from 'react';
-import { Calendar, MapPin, Users, DollarSign, Clock, CheckCircle, XCircle, AlertCircle, Edit3, Trash2, Eye, Building } from 'lucide-react';
+import { Calendar, MapPin, Users, DollarSign, Clock, CheckCircle, XCircle, AlertCircle, Edit3, Trash2, Eye, Building, MoreVertical, LogIn, LogOut, X } from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -13,6 +13,7 @@ export default function MyBookingsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
     const initializeAuth = () => {
@@ -139,9 +140,18 @@ export default function MyBookingsPage() {
     return ['Pending', 'Confirmed'].includes(booking.status);
   };
 
+  const toggleDropdown = (bookingId) => {
+    setOpenDropdown(openDropdown === bookingId ? null : bookingId);
+  };
+
+  const closeDropdown = () => {
+    setOpenDropdown(null);
+  };
+
   const canCheckOut = (booking) => {
     console.log('Checking checkout for booking:', booking._id, 'Status:', booking.status);
-    return booking.status === 'Checked In';
+    // Allow checkout for Pending, Confirmed, and Checked In bookings
+    return ['Pending', 'Confirmed', 'Checked In'].includes(booking.status);
   };
 
   const canCheckIn = (booking) => {
@@ -264,7 +274,7 @@ export default function MyBookingsPage() {
         ) : (
           <div className="space-y-6">
             {bookings.map((booking) => (
-              <div key={booking._id} className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-hidden">
+              <div key={booking._id} className="bg-white rounded-2xl shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-300 overflow-visible">
                 {/* Status Bar */}
                 <div className={`h-2 w-full ${
                   booking.status === 'Confirmed' ? 'bg-green-500' : 
@@ -274,9 +284,89 @@ export default function MyBookingsPage() {
                 }`}></div>
                 
                 <div className="p-6">
-                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-                  {/* Booking Info */}
-                  <div className="flex-1">
+                  <div className="flex items-start gap-4">
+                    {/* Dropdown Menu - Left Side */}
+                    <div className="relative flex-shrink-0">
+                      <button
+                        onClick={() => toggleDropdown(booking._id)}
+                        className="inline-flex items-center justify-center p-2 border-2 border-gray-300 rounded-lg text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-400 transition-all duration-200"
+                      >
+                        <MoreVertical size={20} />
+                      </button>
+
+                      {/* Dropdown Content */}
+                      {openDropdown === booking._id && (
+                        <>
+                          {/* Backdrop */}
+                          <div 
+                            className="fixed inset-0 z-40" 
+                            onClick={closeDropdown}
+                          />
+                          
+                          {/* Dropdown Menu */}
+                          <div className="absolute left-0 top-full mt-2 w-48 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 py-2">
+                            {/* View Details Option */}
+                            <button
+                              onClick={() => {
+                                closeDropdown();
+                                setSelectedBooking(booking);
+                              }}
+                              className="w-full flex items-center px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                            >
+                              <Eye size={16} className="mr-3" />
+                              View Details
+                            </button>
+
+                            {/* Check In Option */}
+                            {canCheckIn(booking) && (
+                              <button
+                                onClick={() => {
+                                  closeDropdown();
+                                  handleCheckIn(booking._id);
+                                }}
+                                className="w-full flex items-center px-4 py-3 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                              >
+                                <LogIn size={16} className="mr-3" />
+                                Check In
+                              </button>
+                            )}
+
+                            {/* Check Out/Complete Option */}
+                            {canCheckOut(booking) && (
+                              <button
+                                onClick={() => {
+                                  closeDropdown();
+                                  setSelectedBooking(booking);
+                                  setShowCheckoutModal(true);
+                                }}
+                                className="w-full flex items-center px-4 py-3 text-sm text-green-700 hover:bg-green-50 transition-colors"
+                              >
+                                <LogOut size={16} className="mr-3" />
+                                {booking.status === 'Checked In' ? 'Check Out' : 'Complete Booking'}
+                              </button>
+                            )}
+
+                            {/* Cancel Option */}
+                            {canCancelBooking(booking) && (
+                              <button
+                                onClick={() => {
+                                  closeDropdown();
+                                  setSelectedBooking(booking);
+                                  setShowCancelModal(true);
+                                }}
+                                className="w-full flex items-center px-4 py-3 text-sm text-red-700 hover:bg-red-50 transition-colors"
+                              >
+                                <X size={16} className="mr-3" />
+                                Cancel Booking
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Booking Info */}
+                    <div className="flex-1">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="flex items-center gap-2">
                         {getStatusIcon(booking.status)}
@@ -368,53 +458,6 @@ export default function MyBookingsPage() {
                       </div>
                     )}
                   </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col gap-3 min-w-[200px]">
-                      <button
-                        onClick={() => setSelectedBooking(booking)}
-                        className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-blue-300 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200"
-                      >
-                        <Eye size={18} className="mr-2" />
-                        View Details
-                      </button>
-                      
-                      {canCheckIn(booking) && (
-                        <button
-                          onClick={() => handleCheckIn(booking._id)}
-                          className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-blue-300 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 transition-all duration-200"
-                        >
-                          <CheckCircle size={18} className="mr-2" />
-                          Check In
-                        </button>
-                      )}
-
-                      {canCheckOut(booking) && (
-                        <button
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setShowCheckoutModal(true);
-                          }}
-                          className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-green-300 rounded-xl text-sm font-semibold text-green-700 bg-green-50 hover:bg-green-100 hover:border-green-400 transition-all duration-200"
-                        >
-                          <CheckCircle size={18} className="mr-2" />
-                          Check Out
-                        </button>
-                      )}
-                      
-                      {canCancelBooking(booking) && (
-                        <button
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setShowCancelModal(true);
-                          }}
-                          className="w-full inline-flex items-center justify-center px-4 py-3 border-2 border-red-300 rounded-xl text-sm font-semibold text-red-700 bg-red-50 hover:bg-red-100 hover:border-red-400 transition-all duration-200"
-                        >
-                          <XCircle size={18} className="mr-2" />
-                          Cancel Booking
-                        </button>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -430,9 +473,14 @@ export default function MyBookingsPage() {
                 <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                   <CheckCircle size={32} className="text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Check Out Confirmation</h3>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {selectedBooking.status === 'Checked In' ? 'Check Out Confirmation' : 'Complete Booking'}
+                </h3>
                 <p className="text-gray-600">
-                  Are you ready to check out from Room {selectedBooking.room?.roomNumber}?
+                  {selectedBooking.status === 'Checked In' 
+                    ? `Are you ready to check out from Room ${selectedBooking.room?.roomNumber}?`
+                    : `Complete your booking for Room ${selectedBooking.room?.roomNumber}?`
+                  }
                 </p>
               </div>
               
@@ -448,7 +496,7 @@ export default function MyBookingsPage() {
                   </div>
                   <div>
                     <span className="text-gray-500">Total Amount:</span>
-                    <p className="font-bold text-green-600">₹{selectedBooking.totalAmount}</p>
+                    <p className="font-bold text-green-600">Rs:{selectedBooking.totalAmount}</p>
                   </div>
                   <div>
                     <span className="text-gray-500">Nights:</span>
@@ -471,7 +519,7 @@ export default function MyBookingsPage() {
                   }}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 transition-colors"
                 >
-                  Keep Staying
+                  {selectedBooking.status === 'Checked In' ? 'Keep Staying' : 'Cancel'}
                 </button>
                 <button
                   onClick={() => {
@@ -480,7 +528,7 @@ export default function MyBookingsPage() {
                   }}
                   className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors"
                 >
-                  Check Out Now
+                  {selectedBooking.status === 'Checked In' ? 'Check Out Now' : 'Complete Booking'}
                 </button>
               </div>
             </div>

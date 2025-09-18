@@ -26,17 +26,75 @@ const HousekeepingDashboard = () => {
   });
 
   useEffect(() => {
-    // Load data from localStorage or API
-    const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-    const tasks = JSON.parse(localStorage.getItem('housekeeping_tasks') || '[]');
-    const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
-    
-    setStats({
-      totalRooms: rooms.length || 150,
-      cleanedRooms: rooms.filter(room => room.status === 'Clean').length || 98,
-      pendingTasks: tasks.filter(task => task.status === 'Pending').length || 12,
-      inventoryAlerts: inventory.filter(item => item.quantity < item.minLevel).length || 3
-    });
+    const fetchData = async () => {
+      try {
+        // Fetch rooms data
+        const roomsResponse = await fetch('http://localhost:3001/api/rooms', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        let totalRooms = 0;
+        let cleanedRooms = 0;
+
+        if (roomsResponse.ok) {
+          const roomsData = await roomsResponse.json();
+          const rooms = roomsData.rooms || [];
+          totalRooms = rooms.length;
+          cleanedRooms = rooms.filter(room => room.status === 'Clean' || room.status === 'Available').length;
+        }
+
+        // Fetch cleaning tasks data
+        const tasksResponse = await fetch('http://localhost:3001/api/cleaning-tasks', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        let pendingTasks = 0;
+        if (tasksResponse.ok) {
+          const tasksData = await tasksResponse.json();
+          const tasks = tasksData.tasks || [];
+          pendingTasks = tasks.filter(task => task.status === 'Pending' || task.status === 'In Progress').length;
+        }
+
+        // Fetch inventory data (if available)
+        const inventoryResponse = await fetch('http://localhost:3001/api/inventory', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        let inventoryAlerts = 0;
+        if (inventoryResponse.ok) {
+          const inventoryData = await inventoryResponse.json();
+          const inventory = inventoryData.items || [];
+          inventoryAlerts = inventory.filter(item => item.quantity < item.minLevel).length;
+        }
+
+        setStats({
+          totalRooms,
+          cleanedRooms,
+          pendingTasks,
+          inventoryAlerts
+        });
+      } catch (error) {
+        console.error('Error fetching housekeeping data:', error);
+        // Set default values if API fails
+        setStats({
+          totalRooms: 0,
+          cleanedRooms: 0,
+          pendingTasks: 0,
+          inventoryAlerts: 0
+        });
+      }
+    };
+
+    fetchData();
   }, []);
 
   const chartData = [

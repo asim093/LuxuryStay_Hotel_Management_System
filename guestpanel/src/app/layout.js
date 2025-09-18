@@ -5,6 +5,8 @@ import './globals.css'
 import { AuthProvider } from './context/AuthContext'
 import LoadingOverlay from './Components/LoadingOverlay/LoadingOverlay'
 import { Suspense } from 'react'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 export const metadata = {
   title: 'LuxuryStay Hotel Management',
@@ -28,6 +30,18 @@ export default function RootLayout({ children }) {
             </Suspense>
           </main>
           <Footer />
+          <ToastContainer
+            position="top-right"
+            autoClose={4000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+          />
         </AuthProvider>
       </body>
     </html>

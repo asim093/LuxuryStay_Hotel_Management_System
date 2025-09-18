@@ -1,6 +1,7 @@
 import { BookingModel } from "../Models/Booking.model.js";
 import { RoomModel } from "../Models/Room.model.js";
 import { Usermodle } from "../Models/User.model.js";
+import sendMail from "../utils/email-send.js";
 
 // Generate unique booking number
 const generateBookingNumber = () => {
@@ -24,7 +25,6 @@ export const createBooking = async (req, res) => {
     if (!roomExists) {
       return res.status(404).json({ message: "Room not found" });
     }
-
     if (roomExists.status !== 'Available') {
       return res.status(400).json({ message: "Room is not available" });
     }
@@ -61,12 +61,12 @@ export const createBooking = async (req, res) => {
     // Update room status
     await RoomModel.findByIdAndUpdate(room, { status: 'Occupied' });
 
-    // Populate the booking with guest and room details
     const populatedBooking = await BookingModel.findById(booking._id)
       .populate('guest', 'name email')
       .populate('room', 'roomNumber roomType pricePerNight');
 
-    // Send notifications for new booking
+    console.log("populatedBooking", populatedBooking);
+
     try {
       const NotificationService = (await import('../services/notificationService.js')).default;
       await NotificationService.createNotification({
@@ -87,10 +87,9 @@ export const createBooking = async (req, res) => {
         }
       });
 
-      // Notify Manager about new booking
       await NotificationService.createNotification({
         title: 'New Revenue',
-        message: `New booking worth ₹${populatedBooking.totalAmount} - Room ${populatedBooking.room?.roomNumber}`,
+        message: `New booking worth Rs:${populatedBooking.totalAmount} - Room ${populatedBooking.room?.roomNumber}`,
         type: 'success',
         category: 'booking',
         recipientRole: 'Manager',
@@ -109,6 +108,47 @@ export const createBooking = async (req, res) => {
       console.log(`Booking creation notifications sent for booking ${populatedBooking._id}`);
     } catch (notificationError) {
       console.error('Error sending booking creation notifications:', notificationError);
+    }
+
+    try {
+
+      const nights = Math.ceil((new Date(populatedBooking.checkOutDate) - new Date(populatedBooking.checkInDate)) / (1000 * 60 * 60 * 24));
+
+      await sendMail({
+        email: [populatedBooking.guest.email],
+        templateName: 'booking_confirmation',
+        templateVariables: {
+          guestName: populatedBooking.guest.name,
+          roomNumber: populatedBooking.room.roomNumber,
+          roomType: populatedBooking.room.roomType,
+          checkInDate: new Date(populatedBooking.checkInDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          checkOutDate: new Date(populatedBooking.checkOutDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          }),
+          nights: nights,
+          roomRate: populatedBooking.room.pricePerNight,
+          totalAmount: populatedBooking.totalAmount,
+          bookingNumber: populatedBooking.bookingNumber,
+          bookingId: populatedBooking._id,
+          bookingTime: new Date().toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })
+        }
+      });
+
+      console.log('Booking confirmation email sent successfully to:', populatedBooking.guest.email);
+    } catch (emailError) {
+      console.error('Error sending booking confirmation email:', emailError);
     }
 
     res.status(201).json({
@@ -260,26 +300,68 @@ export const checkOut = async (req, res) => {
     const { id } = req.params;
     const { notes } = req.body;
 
-    const booking = await BookingModel.findById(id);
+    const booking = await BookingModel.findById(id)
+      .populate('guest', 'name email')
+      .populate('room', 'roomNumber roomType pricePerNight');
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }
 
-    if (booking.status !== 'Checked In') {
-      return res.status(400).json({ message: "Only checked-in guests can be checked out" });
+    if (!['Pending', 'Confirmed', 'Checked In'].includes(booking.status)) {
+      return res.status(400).json({ message: "Only pending, confirmed, or checked-in bookings can be checked out" });
     }
+
+    // Store previous status before updating
+    const previousStatus = booking.status;
 
     booking.status = 'Checked Out';
     booking.actualCheckOutTime = new Date();
     if (notes) booking.checkOutNotes = notes;
 
-    // Update room status to Dirty (needs cleaning)
+    // Update room status based on previous status
     const { RoomModel } = await import('../Models/Room.model.js');
-    await RoomModel.findByIdAndUpdate(booking.room, { status: 'Dirty' });
+
+    if (previousStatus === 'Checked In') {
+      // If was checked in, room needs cleaning
+      await RoomModel.findByIdAndUpdate(booking.room, { status: 'Dirty' });
+    } else {
+      // If was pending/confirmed, room becomes available
+      await RoomModel.findByIdAndUpdate(booking.room, { status: 'Available' });
+    }
 
     await booking.save();
 
-    // Send notifications
+    // Create cleaning task if room needs cleaning
+    // Create task for both 'Checked In' and 'Pending' statuses when checking out
+    if (previousStatus === 'Checked In' || previousStatus === 'Pending') {
+      try {
+        const { HousekeepingTaskModel } = await import('../Models/HousekeepingTask.model.js');
+
+        // Generate task number
+        const taskCount = await HousekeepingTaskModel.countDocuments();
+        const taskNumber = `HT${String(taskCount + 1).padStart(4, '0')}`;
+
+        // Create cleaning task
+        const cleaningTask = new HousekeepingTaskModel({
+          taskNumber: taskNumber,
+          room: booking.room._id,
+          taskType: 'Cleaning',
+          priority: 'High',
+          status: 'Pending',
+          scheduledDate: new Date(),
+          estimatedDuration: 45, // 45 minutes
+          description: `Room ${booking.room.roomNumber} needs cleaning after guest checkout`,
+          notes: `Guest: ${booking.guest.name} checked out. Room needs thorough cleaning.`,
+          createdBy: req.user?.id
+        });
+
+        await cleaningTask.save();
+        console.log(`Cleaning task created: ${taskNumber} for Room ${booking.room.roomNumber}`);
+      } catch (taskError) {
+        console.error('Error creating cleaning task:', taskError);
+      }
+    }
+
     try {
       const NotificationService = (await import('../services/notificationService.js')).default;
       await NotificationService.notifyBookingCheckout(booking);
@@ -287,17 +369,13 @@ export const checkOut = async (req, res) => {
       console.error('Error sending checkout notifications:', notificationError);
     }
 
-    // Send invoice email
     try {
       const populatedBooking = await BookingModel.findById(id)
         .populate('guest', 'name email')
         .populate('room', 'roomNumber roomType pricePerNight');
-      
+
       const nights = Math.ceil((new Date(populatedBooking.checkOutDate) - new Date(populatedBooking.checkInDate)) / (1000 * 60 * 60 * 24));
-      
-      // Import email service
-      const sendMail = (await import('../utils/email-send.js')).default;
-      
+
       await sendMail({
         email: [populatedBooking.guest.email],
         templateName: 'checkout_invoice',
@@ -318,7 +396,7 @@ export const checkOut = async (req, res) => {
           nights: nights,
           roomRate: populatedBooking.room.pricePerNight,
           totalAmount: populatedBooking.totalAmount,
-          bookingId: populatedBooking._id.slice(-8),
+          bookingId: populatedBooking._id,
           checkoutTime: new Date().toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
@@ -451,7 +529,7 @@ export const submitFeedback = async (req, res) => {
 export const sendInvoiceEmail = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const booking = await BookingModel.findById(id)
       .populate('guest', 'name email')
       .populate('room', 'roomNumber roomType pricePerNight');
@@ -476,7 +554,7 @@ export const sendInvoiceEmail = async (req, res) => {
     };
 
     console.log('Invoice Email Data:', invoiceData);
-    
+
     // TODO: Implement actual email sending
     // await sendInvoiceEmail(invoiceData);
 

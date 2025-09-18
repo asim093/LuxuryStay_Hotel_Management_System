@@ -65,15 +65,25 @@ const ReceptionistDashboard = () => {
         const bookings = bookingsData.bookings || [];
         
         console.log('Fetched bookings:', bookings.length);
+        console.log('Sample booking data:', bookings[0]);
 
         // Calculate stats
         const checkedInGuests = bookings.filter(booking => booking.status === 'Checked In');
+        
+        // Today's check-ins (bookings that were checked in today)
         const todayCheckIns = bookings.filter(booking => 
-          booking.status === 'Confirmed' && 
-          new Date(booking.checkInDate).toDateString() === new Date().toDateString()
+          booking.status === 'Checked In' && 
+          booking.actualCheckInTime &&
+          new Date(booking.actualCheckInTime).toDateString() === new Date().toDateString()
         );
+        
+        // Today's check-outs (bookings that were checked out today)
         const todayCheckOuts = bookings.filter(booking => 
-          new Date(booking.checkOutDate).toDateString() === new Date().toDateString()
+          booking.status === 'Checked Out' && 
+          (booking.actualCheckOutTime ? 
+            new Date(booking.actualCheckOutTime).toDateString() === new Date().toDateString() :
+            new Date(booking.updatedAt).toDateString() === new Date().toDateString()
+          )
         );
 
         console.log('Stats calculated:', {
@@ -102,12 +112,14 @@ const ReceptionistDashboard = () => {
         
         setRecentCheckIns(recentCheckInsData);
 
-        // Set upcoming check-outs
+        // Set recent check-outs (today's check-outs)
         const upcomingCheckOutsData = todayCheckOuts.map(booking => ({
           id: booking._id,
           guest: booking.guest?.name || 'Unknown Guest',
           room: booking.room?.roomNumber || 'N/A',
-          time: new Date(booking.checkOutDate).toLocaleTimeString(),
+          time: booking.actualCheckOutTime ? 
+            new Date(booking.actualCheckOutTime).toLocaleTimeString() :
+            new Date(booking.updatedAt).toLocaleTimeString(),
           payment: booking.paymentStatus || 'Pending',
           luggage: booking.luggageStored || false
         }));
@@ -138,6 +150,18 @@ const ReceptionistDashboard = () => {
 
   useEffect(() => {
     fetchReceptionistData();
+  }, [token]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!token) return;
+
+    const interval = setInterval(() => {
+      console.log('Auto-refreshing Receptionist Dashboard data...');
+      fetchReceptionistData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, [token]);
 
   const weeklyData = [

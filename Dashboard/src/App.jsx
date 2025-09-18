@@ -36,7 +36,7 @@ import MaintenanceDashboard from './pages/Maintenance/MaintenanceDashboard/Maint
 import MaintenanceTasksPage from './pages/Maintenance/Taskpage/Taskpage';
 import TaskHistoryPage from './pages/Maintenance/Taskhistory/TaskHistory';
 import ReceptionistDashboard from './pages/Receptionist/ReceptionisDashboard/ReceptionistDashboard';
-// import CheckInCheckOutManagement from './pages/Receptionist/CheckInoutmanagement/Checkincheckout';
+import CheckInCheckOutManagement from './pages/Receptionist/CheckInoutmanagement/Checkincheckout';
 import UserProfilePage from './pages/profile/Profile';
 import Reports from './pages/Admin/Reports/Reports';
 
@@ -161,7 +161,7 @@ function App() {
           }
         />
 
-        {/* <Route
+        <Route
           path="/checkin-checkout"
           element={
             <ProtectedRoute>
@@ -170,7 +170,7 @@ function App() {
               </DashboardLayout>
             </ProtectedRoute>
           }
-        /> */}
+        />
         <Route
           path="/manager"
           element={

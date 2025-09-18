@@ -5,6 +5,11 @@ import { MapPin, Star, Users, Calendar, ArrowRight } from 'lucide-react';
 export default function DestinationsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
 
+  const handleExploreDestination = (destination) => {
+    // Show destination details or redirect to booking
+    alert(`Exploring ${destination.name}! This would typically show more details or redirect to booking page.`);
+  };
+
   const destinations = [
     {
       id: 1,
@@ -166,7 +171,10 @@ export default function DestinationsPage() {
                     <span className="text-2xl font-bold text-gray-900">${destination.avgPrice}</span>
                     <span className="text-sm text-gray-500"> / night avg</span>
                   </div>
-                  <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2">
+                  <button 
+                    onClick={() => handleExploreDestination(destination)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center space-x-2"
+                  >
                     <span>Explore</span>
                     <ArrowRight size={16} />
                   </button>

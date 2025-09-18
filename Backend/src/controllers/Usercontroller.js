@@ -40,7 +40,7 @@ export const Signup = async (req, res) => {
       role,
     });
 
-    const payload = { user: { id: newUser._id } };
+    const payload = { user: { id: newUser._id, role: newUser.role } };
     const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
     const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 
@@ -87,7 +87,7 @@ export const Login = async (req, res) => {
       return res.status(400).json({ message: "Incorrect Password" });
     }
 
-    const payload = { user: { id: user._id } };
+    const payload = { user: { id: user._id, role: user.role } };
     const jwtSecret = process.env.JWT_SECRET_KEY || "luxurystay-super-secret-jwt-key-2024";
     const token = jwt.sign(payload, jwtSecret, { expiresIn: "1h" });
 

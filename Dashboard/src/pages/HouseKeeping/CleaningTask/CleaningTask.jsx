@@ -191,26 +191,15 @@ const CleaningTasksManagement = () => {
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
         console.log('Tasks fetched:', tasksData.tasks?.length || 0);
-        setTasks(tasksData.tasks || []);
+        // Filter out completed tasks - only show pending, in progress, and on hold tasks
+        const activeTasks = (tasksData.tasks || []).filter(task => 
+          !['Completed', 'Cancelled'].includes(task.status)
+        );
+        console.log('Active tasks (excluding completed):', activeTasks.length);
+        setTasks(activeTasks);
       } else {
         console.error('Failed to fetch tasks');
-        // Fallback mock data
-        setTasks([
-          {
-            _id: '1',
-            taskNumber: 'CT001',
-            room: { _id: 'r1', roomNumber: '101', roomType: 'Standard', status: 'Dirty' },
-            assignedTo: { _id: 's1', name: 'Maria Garcia', role: 'Housekeeping' },
-            taskType: 'Checkout Cleaning',
-            priority: 'High',
-            status: 'Pending',
-            dueDate: new Date().toISOString(),
-            dueTime: '14:00',
-            estimatedDuration: 45,
-            instructions: 'Guest checkout - thorough cleaning required',
-            createdAt: new Date().toISOString()
-          }
-        ]);
+        setTasks([]);
       }
 
       // Fetch rooms
@@ -223,11 +212,8 @@ const CleaningTasksManagement = () => {
         console.log('Rooms fetched:', roomsData.rooms?.length || 0);
         setRooms(roomsData.rooms || []);
       } else {
-        // Fallback mock data
-        setRooms([
-          { _id: 'r1', roomNumber: '101', roomType: 'Standard', status: 'Dirty' },
-          { _id: 'r2', roomNumber: '102', roomType: 'Deluxe', status: 'Clean' }
-        ]);
+        console.error('Failed to fetch rooms');
+        setRooms([]);
       }
 
       // Fetch housekeeping staff
@@ -240,11 +226,8 @@ const CleaningTasksManagement = () => {
         console.log('Staff fetched:', staffData.users?.length || 0);
         setStaff(staffData.users || []);
       } else {
-        // Fallback mock data
-        setStaff([
-          { _id: 's1', name: 'Maria Garcia', role: 'Housekeeping' },
-          { _id: 's2', name: 'John Smith', role: 'Housekeeping' }
-        ]);
+        console.error('Failed to fetch staff');
+        setStaff([]);
       }
 
     } catch (error) {
@@ -329,6 +312,37 @@ const CleaningTasksManagement = () => {
     } catch (error) {
       console.error(`Error updating task status:`, error);
       toast.error(`Error updating task status`);
+    }
+  };
+
+  // Handle task completion
+  const handleCompleteTask = async (taskId) => {
+    try {
+      console.log(`Completing task ${taskId}`);
+
+      const response = await fetch(`http://localhost:3001/api/cleaning-tasks/${taskId}/complete`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          notes: 'Task completed successfully',
+          actualDuration: 45, // Default duration
+          rating: 5 // Default rating
+        })
+      });
+
+      if (response.ok) {
+        toast.success('Task completed successfully! Room is now clean.');
+        fetchData(); // Refresh to remove completed task
+      } else {
+        const errorData = await response.json();
+        toast.error(errorData.message || 'Failed to complete task');
+      }
+    } catch (error) {
+      console.error(`Error completing task:`, error);
+      toast.error(`Error completing task`);
     }
   };
 
@@ -914,7 +928,7 @@ const CleaningTasksManagement = () => {
                             
                             {task.status === 'In Progress' && (
                               <button
-                                onClick={() => handleStatusUpdate(task._id, 'Completed')}
+                                onClick={() => handleCompleteTask(task._id)}
                                 className="text-green-600 hover:text-green-900 hover:bg-green-50 p-1 rounded"
                                 title="Complete Task"
                               >

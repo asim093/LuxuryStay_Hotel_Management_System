@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import { 
   Wrench, 
   Search, 
@@ -36,118 +38,22 @@ import {
 } from 'lucide-react';
 
 const MaintenanceTasksPage = () => {
-  // Mock data - replace with actual API calls
-  const [tasks, setTasks] = useState([
-    {
-      _id: '1',
-      taskNumber: 'MT-001',
-      title: 'Air Conditioning Repair',
-      description: 'AC unit in Room 205 is not cooling properly. Guest complained about warm air.',
-      priority: 'High',
-      status: 'Open',
-      category: 'HVAC',
-      location: 'Room 205',
-      reportedBy: { name: 'John Doe', role: 'Front Desk' },
-      assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-      createdAt: '2024-01-15T10:30:00Z',
-      dueDate: '2024-01-16T18:00:00Z',
-      estimatedCost: 150,
-      actualCost: null,
-      estimatedHours: 2,
-      actualHours: null,
-      images: [],
-      notes: []
-    },
-    {
-      _id: '2',
-      taskNumber: 'MT-002',
-      title: 'Plumbing - Leaky Faucet',
-      description: 'Bathroom faucet in Room 102 has a persistent drip that needs repair.',
-      priority: 'Medium',
-      status: 'In Progress',
-      category: 'Plumbing',
-      location: 'Room 102',
-      reportedBy: { name: 'Sarah Wilson', role: 'Housekeeping' },
-      assignedTo: { name: 'Tom Brown', role: 'Maintenance' },
-      createdAt: '2024-01-14T14:20:00Z',
-      dueDate: '2024-01-17T12:00:00Z',
-      estimatedCost: 75,
-      actualCost: null,
-      estimatedHours: 1,
-      actualHours: 0.5,
-      images: [],
-      notes: [
-        { text: 'Started work at 9 AM. Need to replace washer.', timestamp: '2024-01-15T09:00:00Z', author: 'Tom Brown' }
-      ]
-    },
-    {
-      _id: '3',
-      taskNumber: 'MT-003',
-      title: 'Electrical - Light Fixture',
-      description: 'Ceiling light in lobby area is flickering intermittently.',
-      priority: 'Low',
-      status: 'Completed',
-      category: 'Electrical',
-      location: 'Lobby',
-      reportedBy: { name: 'Emma Davis', role: 'Manager' },
-      assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-      createdAt: '2024-01-12T08:45:00Z',
-      dueDate: '2024-01-15T17:00:00Z',
-      estimatedCost: 50,
-      actualCost: 45,
-      estimatedHours: 1,
-      actualHours: 0.75,
-      images: [],
-      notes: [
-        { text: 'Replaced faulty bulb and cleaned fixture.', timestamp: '2024-01-13T11:30:00Z', author: 'Mike Johnson' }
-      ]
-    },
-    {
-      _id: '4',
-      taskNumber: 'MT-004',
-      title: 'Internet Connectivity Issue',
-      description: 'WiFi signal weak in conference room. Multiple guest complaints.',
-      priority: 'High',
-      status: 'Open',
-      category: 'Technology',
-      location: 'Conference Room A',
-      reportedBy: { name: 'Alex Chen', role: 'IT Support' },
-      assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-      createdAt: '2024-01-15T16:00:00Z',
-      dueDate: '2024-01-16T10:00:00Z',
-      estimatedCost: 200,
-      actualCost: null,
-      estimatedHours: 3,
-      actualHours: null,
-      images: [],
-      notes: []
-    },
-    {
-      _id: '5',
-      taskNumber: 'MT-005',
-      title: 'Preventive Maintenance - HVAC',
-      description: 'Monthly HVAC system inspection and filter replacement.',
-      priority: 'Medium',
-      status: 'Scheduled',
-      category: 'HVAC',
-      location: 'Roof Top - HVAC Units',
-      reportedBy: { name: 'System', role: 'Automated' },
-      assignedTo: { name: 'Tom Brown', role: 'Maintenance' },
-      createdAt: '2024-01-15T00:00:00Z',
-      dueDate: '2024-01-18T16:00:00Z',
-      estimatedCost: 100,
-      actualCost: null,
-      estimatedHours: 4,
-      actualHours: null,
-      images: [],
-      notes: []
-    }
-  ]);
+  const token = useSelector((state) => state.user.token);
+  const user = useSelector((state) => {
+    if (state.user?.data?.user) return state.user.data.user;
+    if (state.user?.data?.data?.user) return state.user.data.data.user;
+    if (state.user?.user) return state.user.user;
+    return null;
+  });
+  const userRole = user?.role;
+  const [tasks, setTasks] = useState([]);
+  const [staff, setStaff] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: null });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(8);
@@ -166,6 +72,133 @@ const MaintenanceTasksPage = () => {
     actualCost: '',
     images: []
   });
+
+  const [createForm, setCreateForm] = useState({
+    title: '',
+    description: '',
+    category: 'General',
+    location: '',
+    priority: 'Medium',
+    assignedTo: '',
+    estimatedDuration: 60,
+    estimatedCost: 0,
+    scheduledDate: new Date().toISOString().split('T')[0],
+    notes: ''
+  });
+
+  const [rooms, setRooms] = useState([]);
+
+  // Fetch maintenance tasks data
+  const fetchMaintenanceTasks = async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching maintenance tasks...');
+
+      // Fetch maintenance tasks
+      const tasksResponse = await fetch('http://localhost:3001/api/maintenance-tasks', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (tasksResponse.ok) {
+        const tasksData = await tasksResponse.json();
+        console.log('Maintenance tasks fetched:', tasksData.tasks?.length || 0);
+        setTasks(tasksData.tasks || []);
+        toast.success(`✅ Loaded ${tasksData.tasks?.length || 0} maintenance tasks`);
+      } else {
+        const errorText = await tasksResponse.text();
+        console.error('Failed to fetch maintenance tasks. Status:', tasksResponse.status);
+        setTasks([]);
+        toast.error(`❌ Failed to fetch maintenance tasks: ${tasksResponse.status}`);
+      }
+
+      // Fetch maintenance staff
+      const staffResponse = await fetch('http://localhost:3001/api/maintenance-tasks/staff', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (staffResponse.ok) {
+        const staffData = await staffResponse.json();
+        console.log('Staff fetched:', staffData.staff?.length || 0);
+        setStaff(staffData.staff || []);
+      } else {
+        console.error('Failed to fetch staff');
+        setStaff([]);
+      }
+
+      const roomsResponse = await fetch('http://localhost:3001/api/rooms', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (roomsResponse.ok) {
+        const roomsData = await roomsResponse.json();
+        console.log('Rooms fetched:', roomsData.rooms?.length || 0);
+        setRooms(roomsData.rooms || []);
+      } else {
+        console.error('Failed to fetch rooms');
+        setRooms([]);
+      }
+
+    } catch (error) {
+      console.error('Error fetching maintenance data:', error);
+      toast.error('❌ Error fetching data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaintenanceTasks();
+  }, []);
+
+  // Handle create task
+  const handleCreateTask = async () => {
+    try {
+      const taskData = {
+        ...createForm,
+        room: createForm.location.includes('Room') ? 
+          rooms.find(r => r.roomNumber === createForm.location.replace('Room ', ''))?.id : null,
+        estimatedDuration: parseInt(createForm.estimatedDuration),
+        estimatedCost: parseFloat(createForm.estimatedCost)
+      };
+
+      const response = await fetch('http://localhost:3001/api/maintenance-tasks', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(taskData)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setTasks(prev => [result.task, ...prev]);
+        toast.success('✅ Maintenance task created and assigned successfully!');
+        setShowCreateModal(false);
+        setCreateForm({
+          title: '',
+          description: '',
+          category: 'General',
+          location: '',
+          priority: 'Medium',
+          assignedTo: '',
+          estimatedDuration: 60,
+          estimatedCost: 0,
+          scheduledDate: new Date().toISOString().split('T')[0],
+          notes: ''
+        });
+      } else {
+        const errorData = await response.json();
+        toast.error(`❌ Failed to create task: ${errorData.message}`);
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error('❌ Error creating task');
+    }
+  };
 
   // Priority and status configurations
   const priorityConfig = {
@@ -195,10 +228,30 @@ const MaintenanceTasksPage = () => {
   };
 
   // Handle task status update
-  const handleStatusUpdate = (taskId, newStatus) => {
-    setTasks(prev => prev.map(task => 
-      task._id === taskId ? { ...task, status: newStatus } : task
-    ));
+  const handleStatusUpdate = async (taskId, newStatus) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/maintenance-tasks/${taskId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setTasks(prev => prev.map(task => 
+          task._id === taskId ? result.task : task
+        ));
+        toast.success(`✅ Task status updated to ${newStatus}`);
+      } else {
+        toast.error('❌ Failed to update task status');
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      toast.error('❌ Error updating task status');
+    }
   };
 
   // Handle task details view
@@ -221,42 +274,86 @@ const MaintenanceTasksPage = () => {
   };
 
   // Submit task update
-  const submitTaskUpdate = () => {
+  const submitTaskUpdate = async () => {
     if (!selectedTask) return;
 
-    const updatedTask = {
-      ...selectedTask,
-      status: updateForm.status,
-      actualHours: updateForm.actualHours ? parseFloat(updateForm.actualHours) : selectedTask.actualHours,
-      actualCost: updateForm.actualCost ? parseFloat(updateForm.actualCost) : selectedTask.actualCost,
-      notes: updateForm.notes ? [
-        ...selectedTask.notes,
-        {
-          text: updateForm.notes,
-          timestamp: new Date().toISOString(),
-          author: 'Current User' // Replace with actual user
+    try {
+      const updateData = {
+        status: updateForm.status,
+        actualHours: updateForm.actualHours ? parseFloat(updateForm.actualHours) : selectedTask.actualHours,
+        actualCost: updateForm.actualCost ? parseFloat(updateForm.actualCost) : selectedTask.actualCost,
+        notes: updateForm.notes || undefined
+      };
+
+      // If completing the task, use the complete endpoint
+      if (updateForm.status === 'Completed') {
+        const response = await fetch(`http://localhost:3001/api/maintenance-tasks/${selectedTask._id}/complete`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          setTasks(prev => prev.map(task => 
+            task._id === selectedTask._id ? result.task : task
+          ));
+          toast.success('✅ Task completed successfully!');
+        } else {
+          toast.error('❌ Failed to complete task');
+          return;
         }
-      ] : selectedTask.notes
-    };
+      } else {
+        // Regular update
+        const response = await fetch(`http://localhost:3001/api/maintenance-tasks/${selectedTask._id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updateData)
+        });
 
-    setTasks(prev => prev.map(task => 
-      task._id === selectedTask._id ? updatedTask : task
-    ));
+        if (response.ok) {
+          const result = await response.json();
+          setTasks(prev => prev.map(task => 
+            task._id === selectedTask._id ? result.task : task
+          ));
+          toast.success('✅ Task updated successfully!');
+        } else {
+          toast.error('❌ Failed to update task');
+          return;
+        }
+      }
 
-    setShowUpdateModal(false);
-    setSelectedTask(null);
-    setUpdateForm({
-      status: '',
-      notes: '',
-      actualHours: '',
-      actualCost: '',
-      images: []
-    });
+      setShowUpdateModal(false);
+      setSelectedTask(null);
+      setUpdateForm({
+        status: '',
+        notes: '',
+        actualHours: '',
+        actualCost: '',
+        images: []
+      });
+    } catch (error) {
+      console.error('Error updating task:', error);
+      toast.error('❌ Error updating task');
+    }
   };
 
   // Filter tasks
   const filteredTasks = useMemo(() => {
-    return tasks.filter(task => {
+    let filteredData = tasks;
+
+    // For maintenance staff, only show their assigned tasks
+    if (userRole === 'Maintenance' && user?._id) {
+      filteredData = tasks.filter(task => task.assignedTo?._id === user._id);
+    }
+
+    return filteredData.filter(task => {
       const matchesSearch = !filters.search || 
         task.taskNumber.toLowerCase().includes(filters.search.toLowerCase()) ||
         task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
@@ -265,11 +362,11 @@ const MaintenanceTasksPage = () => {
       const matchesStatus = !filters.status || task.status === filters.status;
       const matchesPriority = !filters.priority || task.priority === filters.priority;
       const matchesCategory = !filters.category || task.category === filters.category;
-      const matchesAssignedTo = !filters.assignedTo || task.assignedTo?.name.toLowerCase().includes(filters.assignedTo.toLowerCase());
+      const matchesAssignedTo = !filters.assignedTo || task.assignedTo?._id === filters.assignedTo;
 
       return matchesSearch && matchesStatus && matchesPriority && matchesCategory && matchesAssignedTo;
     });
-  }, [tasks, filters]);
+  }, [tasks, filters, userRole, user]);
 
   // Sort tasks
   const sortedTasks = useMemo(() => {
@@ -329,7 +426,7 @@ const MaintenanceTasksPage = () => {
     open: tasks.filter(t => t.status === 'Open').length,
     inProgress: tasks.filter(t => t.status === 'In Progress').length,
     completed: tasks.filter(t => t.status === 'Completed').length,
-    overdue: tasks.filter(t => new Date(t.dueDate) < new Date() && !['Completed', 'Cancelled'].includes(t.status)).length,
+    overdue: tasks.filter(t => new Date(t.scheduledDate) < new Date() && !['Completed', 'Cancelled'].includes(t.status)).length,
     highPriority: tasks.filter(t => ['High', 'Critical'].includes(t.priority)).length
   }), [tasks]);
 
@@ -355,7 +452,7 @@ const MaintenanceTasksPage = () => {
 
   // Check if task is overdue
   const isOverdue = (task) => {
-    return new Date(task.dueDate) < new Date() && !['Completed', 'Cancelled'].includes(task.status);
+    return new Date(task.scheduledDate) < new Date() && !['Completed', 'Cancelled'].includes(task.status);
   };
 
   return (
@@ -371,16 +468,25 @@ const MaintenanceTasksPage = () => {
                 </div>
                 <h1 className="text-3xl font-bold text-gray-900">Maintenance Tasks</h1>
               </div>
-              <p className="text-gray-600">Manage and track all maintenance tasks efficiently</p>
+              <p className="text-gray-600">
+                {userRole === 'Maintenance' 
+                  ? 'View and update status of your assigned maintenance tasks'
+                  : 'Manage and track all maintenance tasks efficiently'
+                }
+              </p>
             </div>
-            <div className="flex-shrink-0">
-              <button
-                className="inline-flex items-center justify-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
-              >
-                <Plus size={20} />
-                New Task
-              </button>
-            </div>
+            {/* Only Managers and Admins can create tasks */}
+            {(userRole === 'Manager' || userRole === 'Admin') && (
+              <div className="flex-shrink-0">
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="inline-flex items-center justify-center px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white font-semibold rounded-lg shadow-sm transition-all duration-200 gap-2 w-full lg:w-auto"
+                >
+                  <Plus size={20} />
+                  Create & Assign Task
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -533,13 +639,16 @@ const MaintenanceTasksPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Assigned To</label>
-              <input
-                type="text"
-                placeholder="Search by name..."
+              <select
                 className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
                 value={filters.assignedTo}
                 onChange={(e) => setFilters(prev => ({ ...prev, assignedTo: e.target.value }))}
-              />
+              >
+                <option value="">All Staff</option>
+                {staff.map(s => (
+                  <option key={s._id} value={s._id}>{s.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="flex items-end">
@@ -627,11 +736,11 @@ const MaintenanceTasksPage = () => {
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('dueDate')}
+                      onClick={() => handleSort('scheduledDate')}
                     >
                       <div className="flex items-center gap-2">
-                        Due Date
-                        <SortIcon column="dueDate" />
+                        Scheduled Date
+                        <SortIcon column="scheduledDate" />
                       </div>
                     </th>
                     <th
@@ -699,7 +808,7 @@ const MaintenanceTasksPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className={isOverdue(task) ? 'text-red-600 font-medium' : ''}>
-                            {formatDate(task.dueDate)}
+                            {formatDate(task.scheduledDate)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -728,13 +837,16 @@ const MaintenanceTasksPage = () => {
                               <Eye size={16} />
                             </button>
                             
-                            <button
-                              onClick={() => openUpdateModal(task)}
-                              className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 p-1 rounded"
-                              title="Update Task"
-                            >
-                              <Edit size={16} />
-                            </button>
+                            {/* Only Managers and Admins can edit tasks */}
+                            {(userRole === 'Manager' || userRole === 'Admin') && (
+                              <button
+                                onClick={() => openUpdateModal(task)}
+                                className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 p-1 rounded"
+                                title="Update Task"
+                              >
+                                <Edit size={16} />
+                              </button>
+                            )}
                             
                             {task.status === 'Open' && (
                               <button
@@ -864,8 +976,8 @@ const MaintenanceTasksPage = () => {
                       <p className="text-sm text-gray-900">{selectedTask.location}</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                      <p className="text-sm text-gray-900">{formatDate(selectedTask.dueDate)}</p>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                      <p className="text-sm text-gray-900">{formatDate(selectedTask.scheduledDate)}</p>
                     </div>
                   </div>
 
@@ -933,15 +1045,18 @@ const MaintenanceTasksPage = () => {
                   >
                     Close
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      openUpdateModal(selectedTask);
-                    }}
-                    className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700"
-                  >
-                    Update Task
-                  </button>
+                  {/* Only Managers and Admins can update tasks */}
+                  {(userRole === 'Manager' || userRole === 'Admin') && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        openUpdateModal(selectedTask);
+                      }}
+                      className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700"
+                    >
+                      Update Task
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -1039,6 +1154,167 @@ const MaintenanceTasksPage = () => {
                     className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700"
                   >
                     Update Task
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Task Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-medium text-gray-900">Create & Assign Maintenance Task</h3>
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle size={24} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Task Title *</label>
+                    <input
+                      type="text"
+                      value={createForm.title}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="e.g., Fix air conditioning in Room 205"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Description *</label>
+                    <textarea
+                      value={createForm.description}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Detailed description of the maintenance issue..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                      <select
+                        value={createForm.category}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, category: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="General">General</option>
+                        <option value="HVAC">HVAC</option>
+                        <option value="Plumbing">Plumbing</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Furniture">Furniture</option>
+                        <option value="Cleaning">Cleaning</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                      <select
+                        value={createForm.priority}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, priority: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
+                        <option value="Urgent">Urgent</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
+                    <input
+                      type="text"
+                      value={createForm.location}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, location: e.target.value }))}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="e.g., Room 205, Lobby, Roof Top, Conference Room A"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Assign to Staff *</label>
+                    <select
+                      value={createForm.assignedTo}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, assignedTo: e.target.value }))}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    >
+                      <option value="">Select maintenance staff...</option>
+                      {staff.map(s => (
+                        <option key={s._id} value={s._id}>{s.name} - {s.role}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Scheduled Date</label>
+                      <input
+                        type="date"
+                        value={createForm.scheduledDate}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, scheduledDate: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Est. Duration (minutes)</label>
+                      <input
+                        type="number"
+                        value={createForm.estimatedDuration}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, estimatedDuration: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        min="15"
+                        step="15"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Est. Cost (Rs.)</label>
+                      <input
+                        type="number"
+                        value={createForm.estimatedCost}
+                        onChange={(e) => setCreateForm(prev => ({ ...prev, estimatedCost: e.target.value }))}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                        min="0"
+                        step="50"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
+                    <textarea
+                      value={createForm.notes}
+                      onChange={(e) => setCreateForm(prev => ({ ...prev, notes: e.target.value }))}
+                      rows={2}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder="Any additional instructions or notes..."
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCreateTask}
+                    disabled={!createForm.title || !createForm.description || !createForm.location || !createForm.assignedTo}
+                    className="px-4 py-2 text-sm font-medium text-white bg-orange-600 border border-transparent rounded-md hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Create & Assign Task
                   </button>
                 </div>
               </div>

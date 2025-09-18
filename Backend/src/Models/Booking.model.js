@@ -58,6 +58,20 @@ const BookingSchema = new mongoose.Schema({
   },
   notes: { 
     type: String 
+  },
+  actualCheckInTime: {
+    type: Date,
+    default: null
+  },
+  actualCheckOutTime: {
+    type: Date,
+    default: null
+  },
+  checkInNotes: {
+    type: String
+  },
+  checkOutNotes: {
+    type: String
   }
 }, {
   timestamps: true

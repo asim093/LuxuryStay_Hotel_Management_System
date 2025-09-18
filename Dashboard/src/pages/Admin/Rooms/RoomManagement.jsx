@@ -564,7 +564,7 @@ const RoomManagement = () => {
                     {/* Price */}
                     <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                       <div>
-                        <span className="text-2xl font-bold text-green-600">₹{room.pricePerNight}</span>
+                        <span className="text-2xl font-bold text-green-600">Rs:{room.pricePerNight}</span>
                         <span className="text-sm text-gray-600 ml-1">/night</span>
                       </div>
                       <div className="text-right">

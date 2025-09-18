@@ -24,7 +24,7 @@ const Login = ({ onSwitchToSignup }) => {
       Admin: '/dashboard',
       Manager: '/dashboard',
       Staff: '/dashboard',
-      Receptionist: '/checkin-checkout',
+      Receptionist: '/reception-dashboard',
       Maintenance: '/maintenance-dashboard',
       Housekeeping: '/HouseKeepingDashboard',
       Guest: '/my-reservations'

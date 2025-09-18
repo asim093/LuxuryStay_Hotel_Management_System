@@ -259,82 +259,91 @@ const CheckInCheckOutManagement = () => {
         'Pending': { color: 'bg-red-100 text-red-800 border-red-200', icon: AlertCircle }
     };
 
-    // Mock data initialization
+    // Fetch real data from API
     useEffect(() => {
-        const initializeMockData = () => {
+        const fetchData = async () => {
+            if (!token) return;
+
             setLoading(true);
+            try {
+                // Fetch bookings
+                const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            // Mock bookings data
-            const mockBookings = [
-                {
-                    _id: '1',
-                    bookingNumber: 'BK001',
-                    guestName: 'Ahmed Ali',
-                    guestEmail: 'ahmed.ali@email.com',
-                    guestPhone: '+92-300-1234567',
-                    guestAddress: 'House 123, Street 5, Gulshan-e-Iqbal, Karachi',
-                    guestIdType: 'CNIC',
-                    guestIdNumber: '42101-1234567-1',
-                    room: { _id: 'r1', roomNumber: '101', roomType: 'Deluxe', pricePerNight: 8000 },
-                    checkInDate: new Date().toISOString(),
-                    checkInTime: '14:00',
-                    checkOutDate: new Date(Date.now() + 86400000).toISOString(),
-                    checkOutTime: '12:00',
-                    numberOfGuests: 2,
-                    status: 'Pending',
-                    paymentMethod: 'Credit Card',
-                    totalAmount: 8000,
-                    advancePayment: 4000,
-                    paymentStatus: 'Partial',
-                    vehicleNumber: 'ABC-123',
-                    emergencyContact: 'Sara Ali',
-                    emergencyPhone: '+92-301-7654321',
-                    specialRequests: 'Late check-in requested',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    _id: '2',
-                    bookingNumber: 'BK002',
-                    guestName: 'Fatima Khan',
-                    guestEmail: 'fatima.khan@email.com',
-                    guestPhone: '+92-321-9876543',
-                    guestAddress: 'Flat 45, Block C, DHA Phase 2, Karachi',
-                    guestIdType: 'Passport',
-                    guestIdNumber: 'AB1234567',
-                    room: { _id: 'r2', roomNumber: '205', roomType: 'Standard', pricePerNight: 5000 },
-                    checkInDate: new Date(Date.now() - 86400000).toISOString(),
-                    checkInTime: '15:30',
-                    checkOutDate: new Date().toISOString(),
-                    checkOutTime: '11:00',
-                    numberOfGuests: 1,
-                    status: 'Checked In',
-                    paymentMethod: 'Cash',
-                    totalAmount: 5000,
-                    advancePayment: 5000,
-                    paymentStatus: 'Paid',
-                    vehicleNumber: '',
-                    emergencyContact: 'Hassan Khan',
-                    emergencyPhone: '+92-322-1111111',
-                    specialRequests: 'Non-smoking room',
-                    createdAt: new Date(Date.now() - 86400000).toISOString()
+                if (bookingsResponse.ok) {
+                    const bookingsData = await bookingsResponse.json();
+                    const bookings = bookingsData.bookings || [];
+
+                    // Transform bookings data to match expected format
+                    const transformedBookings = bookings.map(booking => ({
+                        _id: booking._id,
+                        bookingNumber: booking.bookingNumber,
+                        guestName: booking.guest?.name || 'N/A',
+                        guestEmail: booking.guest?.email || 'N/A',
+                        guestPhone: booking.guest?.phone || 'N/A',
+                        guestAddress: booking.guest?.address || 'N/A',
+                        guestIdType: booking.guest?.idType || 'CNIC',
+                        guestIdNumber: booking.guest?.idNumber || 'N/A',
+                        room: {
+                            _id: booking.room?._id,
+                            roomNumber: booking.room?.roomNumber,
+                            roomType: booking.room?.roomType,
+                            pricePerNight: booking.room?.pricePerNight || 0
+                        },
+                        checkInDate: booking.checkInDate,
+                        checkInTime: '14:00', // Default check-in time
+                        checkOutDate: booking.checkOutDate,
+                        checkOutTime: '12:00', // Default check-out time
+                        numberOfGuests: booking.numberOfGuests,
+                        status: booking.status,
+                        paymentMethod: booking.paymentMethod || 'Cash',
+                        totalAmount: booking.totalAmount,
+                        advancePayment: booking.advancePayment || 0,
+                        paymentStatus: booking.paymentStatus,
+                        vehicleNumber: booking.vehicleNumber || '',
+                        emergencyContact: booking.emergencyContact || 'N/A',
+                        emergencyPhone: booking.emergencyPhone || 'N/A',
+                        specialRequests: booking.specialRequests || '',
+                        createdAt: booking.createdAt,
+                        actualCheckInTime: booking.actualCheckInTime,
+                        actualCheckOutTime: booking.actualCheckOutTime
+                    }));
+
+                    setBookings(transformedBookings);
+                } else {
+                    console.error('Failed to fetch bookings:', bookingsResponse.status);
+                    toast.error('Failed to fetch bookings');
                 }
-            ];
 
-            // Mock rooms data
-            const mockRooms = [
-                { _id: 'r1', roomNumber: '101', roomType: 'Deluxe', status: 'Available', pricePerNight: 8000 },
-                { _id: 'r2', roomNumber: '102', roomType: 'Standard', status: 'Available', pricePerNight: 5000 },
-                { _id: 'r3', roomNumber: '205', roomType: 'Standard', status: 'Occupied', pricePerNight: 5000 },
-                { _id: 'r4', roomNumber: '301', roomType: 'Suite', status: 'Available', pricePerNight: 12000 }
-            ];
+                // Fetch rooms
+                const roomsResponse = await fetch('http://localhost:3001/api/rooms', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
 
-            setBookings(mockBookings);
-            setRooms(mockRooms);
-            setLoading(false);
+                if (roomsResponse.ok) {
+                    const roomsData = await roomsResponse.json();
+                    setRooms(roomsData.rooms || []);
+                } else {
+                    console.error('Failed to fetch rooms:', roomsResponse.status);
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                toast.error('Error fetching data');
+            } finally {
+                setLoading(false);
+            }
         };
 
-        initializeMockData();
-    }, []);
+        fetchData();
+    }, [token]);
 
     // Generate booking number helper
     const generateBookingNumber = () => 'BK' + String(Math.floor(1000 + Math.random() * 9000));
@@ -379,12 +388,71 @@ const CheckInCheckOutManagement = () => {
     // Handle check-in
     const handleCheckIn = async (bookingId) => {
         try {
-            setBookings(prev => prev.map(b =>
-                b._id === bookingId
-                    ? { ...b, status: 'Checked In', actualCheckInTime: new Date().toISOString() }
-                    : b
-            ));
-            toast.success('Guest checked in successfully');
+            const response = await fetch(`http://localhost:3001/api/bookings/${bookingId}/checkin`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notes: 'Checked in by receptionist'
+                })
+            });
+
+            if (response.ok) {
+                // Refresh data after successful check-in
+                const fetchData = async () => {
+                    const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (bookingsResponse.ok) {
+                        const bookingsData = await bookingsResponse.json();
+                        const bookings = bookingsData.bookings || [];
+                        const transformedBookings = bookings.map(booking => ({
+                            _id: booking._id,
+                            bookingNumber: booking.bookingNumber,
+                            guestName: booking.guest?.name || 'N/A',
+                            guestEmail: booking.guest?.email || 'N/A',
+                            guestPhone: booking.guest?.phone || 'N/A',
+                            guestAddress: booking.guest?.address || 'N/A',
+                            guestIdType: booking.guest?.idType || 'CNIC',
+                            guestIdNumber: booking.guest?.idNumber || 'N/A',
+                            room: {
+                                _id: booking.room?._id,
+                                roomNumber: booking.room?.roomNumber,
+                                roomType: booking.room?.roomType,
+                                pricePerNight: booking.room?.pricePerNight || 0
+                            },
+                            checkInDate: booking.checkInDate,
+                            checkInTime: '14:00',
+                            checkOutDate: booking.checkOutDate,
+                            checkOutTime: '12:00',
+                            numberOfGuests: booking.numberOfGuests,
+                            status: booking.status,
+                            paymentMethod: booking.paymentMethod || 'Cash',
+                            totalAmount: booking.totalAmount,
+                            advancePayment: booking.advancePayment || 0,
+                            paymentStatus: booking.paymentStatus,
+                            vehicleNumber: booking.vehicleNumber || '',
+                            emergencyContact: booking.emergencyContact || 'N/A',
+                            emergencyPhone: booking.emergencyPhone || 'N/A',
+                            specialRequests: booking.specialRequests || '',
+                            createdAt: booking.createdAt,
+                            actualCheckInTime: booking.actualCheckInTime,
+                            actualCheckOutTime: booking.actualCheckOutTime
+                        }));
+                        setBookings(transformedBookings);
+                    }
+                };
+                fetchData();
+                toast.success('Guest checked in successfully');
+            } else {
+                const errorData = await response.json();
+                toast.error(errorData.message || 'Failed to check in guest');
+            }
         } catch (error) {
             console.error('Error checking in guest:', error);
             toast.error('Error checking in guest');
@@ -394,12 +462,71 @@ const CheckInCheckOutManagement = () => {
     // Handle check-out
     const handleCheckOut = async (bookingId) => {
         try {
-            setBookings(prev => prev.map(b =>
-                b._id === bookingId
-                    ? { ...b, status: 'Checked Out', actualCheckOutTime: new Date().toISOString() }
-                    : b
-            ));
-            toast.success('Guest checked out successfully');
+            const response = await fetch(`http://localhost:3001/api/bookings/${bookingId}/checkout`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    notes: 'Checked out by receptionist'
+                })
+            });
+
+            if (response.ok) {
+                // Refresh data after successful check-out
+                const fetchData = async () => {
+                    const bookingsResponse = await fetch('http://localhost:3001/api/bookings', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    if (bookingsResponse.ok) {
+                        const bookingsData = await bookingsResponse.json();
+                        const bookings = bookingsData.bookings || [];
+                        const transformedBookings = bookings.map(booking => ({
+                            _id: booking._id,
+                            bookingNumber: booking.bookingNumber,
+                            guestName: booking.guest?.name || 'N/A',
+                            guestEmail: booking.guest?.email || 'N/A',
+                            guestPhone: booking.guest?.phone || 'N/A',
+                            guestAddress: booking.guest?.address || 'N/A',
+                            guestIdType: booking.guest?.idType || 'CNIC',
+                            guestIdNumber: booking.guest?.idNumber || 'N/A',
+                            room: {
+                                _id: booking.room?._id,
+                                roomNumber: booking.room?.roomNumber,
+                                roomType: booking.room?.roomType,
+                                pricePerNight: booking.room?.pricePerNight || 0
+                            },
+                            checkInDate: booking.checkInDate,
+                            checkInTime: '14:00',
+                            checkOutDate: booking.checkOutDate,
+                            checkOutTime: '12:00',
+                            numberOfGuests: booking.numberOfGuests,
+                            status: booking.status,
+                            paymentMethod: booking.paymentMethod || 'Cash',
+                            totalAmount: booking.totalAmount,
+                            advancePayment: booking.advancePayment || 0,
+                            paymentStatus: booking.paymentStatus,
+                            vehicleNumber: booking.vehicleNumber || '',
+                            emergencyContact: booking.emergencyContact || 'N/A',
+                            emergencyPhone: booking.emergencyPhone || 'N/A',
+                            specialRequests: booking.specialRequests || '',
+                            createdAt: booking.createdAt,
+                            actualCheckInTime: booking.actualCheckInTime,
+                            actualCheckOutTime: booking.actualCheckOutTime
+                        }));
+                        setBookings(transformedBookings);
+                    }
+                };
+                fetchData();
+                toast.success('Guest checked out successfully');
+            } else {
+                const errorData = await response.json();
+                toast.error(errorData.message || 'Failed to check out guest');
+            }
         } catch (error) {
             console.error('Error checking out guest:', error);
             toast.error('Error checking out guest');
@@ -592,10 +719,10 @@ const CheckInCheckOutManagement = () => {
                 </div>
 
                 {/* Stats Section */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 w-full">
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="w-full">
                                 <p className="text-sm font-medium text-gray-600">Total Bookings</p>
                                 <p className="text-2xl font-bold text-gray-900">{bookingStats.total}</p>
                             </div>
@@ -605,9 +732,9 @@ const CheckInCheckOutManagement = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="w-full">
                                 <p className="text-sm font-medium text-gray-600">Pending</p>
                                 <p className="text-2xl font-bold text-yellow-600">{bookingStats.pending}</p>
                             </div>
@@ -617,9 +744,9 @@ const CheckInCheckOutManagement = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="w-full">
                                 <p className="text-sm font-medium text-gray-600">Checked In</p>
                                 <p className="text-2xl font-bold text-green-600">{bookingStats.checkedIn}</p>
                             </div>
@@ -629,9 +756,9 @@ const CheckInCheckOutManagement = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="w-full">
                                 <p className="text-sm font-medium text-gray-600">Checked Out</p>
                                 <p className="text-2xl font-bold text-blue-600">{bookingStats.checkedOut}</p>
                             </div>
@@ -641,33 +768,9 @@ const CheckInCheckOutManagement = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Today Arrivals</p>
-                                <p className="text-2xl font-bold text-purple-600">{bookingStats.arrivals}</p>
-                            </div>
-                            <div className="p-2 bg-purple-100 rounded-lg">
-                                <Luggage className="h-5 w-5 text-purple-600" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-600">Today Departures</p>
-                                <p className="text-2xl font-bold text-orange-600">{bookingStats.departures}</p>
-                            </div>
-                            <div className="p-2 bg-orange-100 rounded-lg">
-                                <Car className="h-5 w-5 text-orange-600" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex items-center justify-between">
-                            <div>
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 w-full">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="w-full">
                                 <p className="text-sm font-medium text-gray-600">Revenue</p>
                                 <p className="text-2xl font-bold text-emerald-600">₨{bookingStats.revenue.toLocaleString()}</p>
                             </div>
@@ -694,8 +797,8 @@ const CheckInCheckOutManagement = () => {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`${activeTab === tab.id
-                                                ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
-                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            ? 'border-indigo-500 text-indigo-600 bg-indigo-50'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                             } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm rounded-t-lg flex items-center gap-2`}
                                     >
                                         <TabIcon size={16} />
@@ -717,8 +820,8 @@ const CheckInCheckOutManagement = () => {
                             <p className="text-sm text-gray-600">Use filters to find specific bookings quickly</p>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
-                            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+                        <div className="flex flex-col lg:flex-row lg:flex-wrap gap-4">
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
                                 <div className="relative">
                                     <Search className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -732,7 +835,7 @@ const CheckInCheckOutManagement = () => {
                                 </div>
                             </div>
 
-                            <div>
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
                                 <select
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -748,7 +851,7 @@ const CheckInCheckOutManagement = () => {
                                 </select>
                             </div>
 
-                            <div>
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Room Type</label>
                                 <select
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -763,7 +866,7 @@ const CheckInCheckOutManagement = () => {
                                 </select>
                             </div>
 
-                            <div>
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Payment Status</label>
                                 <select
                                     className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
@@ -777,7 +880,7 @@ const CheckInCheckOutManagement = () => {
                                 </select>
                             </div>
 
-                            <div>
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Check-In Date</label>
                                 <input
                                     type="date"
@@ -787,7 +890,7 @@ const CheckInCheckOutManagement = () => {
                                 />
                             </div>
 
-                            <div>
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Check-Out Date</label>
                                 <input
                                     type="date"
@@ -797,7 +900,7 @@ const CheckInCheckOutManagement = () => {
                                 />
                             </div>
 
-                            <div className="flex items-end">
+                            <div className="w-full lg:w-1/6 min-w-[180px] flex-shrink-0 flex items-end">
                                 <button
                                     onClick={clearFilters}
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"

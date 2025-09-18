@@ -489,7 +489,7 @@ export default function ProfilePage() {
                     <div className="flex justify-between items-center">
                       <div className="text-sm">
                         <span className="text-gray-600">Total: </span>
-                        <span className="font-semibold text-green-600">₹{booking.totalAmount}</span>
+                        <span className="font-semibold text-green-600">Rs:{booking.totalAmount}</span>
                       </div>
                       
                       {canGiveFeedback(booking) && (

@@ -27,7 +27,7 @@ const CompletedRoomsManagement = () => {
   const [completedRooms, setCompletedRooms] = useState([]);
   const [staff, setStaff] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sortConfig, setSortConfig] = useState({ key: 'completedAt', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'completedDate', direction: 'desc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(12);
   const [filters, setFilters] = useState({
@@ -47,100 +47,32 @@ const CompletedRoomsManagement = () => {
       console.log('Fetching completed rooms data...');
 
       // Fetch completed cleaning tasks with room and staff details
+      console.log('Making request to:', 'http://localhost:3001/api/cleaning-tasks/completed');
+      console.log('With token:', token ? 'Token exists' : 'No token');
+      
       const tasksResponse = await fetch('http://localhost:3001/api/cleaning-tasks/completed', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('Response status:', tasksResponse.status);
+      console.log('Response ok:', tasksResponse.ok);
       
       if (tasksResponse.ok) {
         const tasksData = await tasksResponse.json();
+        console.log('Complete response data:', tasksData);
         console.log('Completed tasks fetched:', tasksData.tasks?.length || 0);
+        console.log('Tasks data:', tasksData.tasks);
         setCompletedRooms(tasksData.tasks || []);
+        toast.success(`✅ Loaded ${tasksData.tasks?.length || 0} completed tasks`);
       } else {
-        console.error('Failed to fetch completed tasks');
-        // Fallback mock data
-        setCompletedRooms([
-          {
-            _id: '1',
-            taskNumber: 'CT001',
-            room: { 
-              _id: 'r1', 
-              roomNumber: '101', 
-              roomType: 'Standard', 
-              floor: 1,
-              status: 'Clean'
-            },
-            cleanedBy: { 
-              _id: 's1', 
-              name: 'Maria Garcia', 
-              role: 'Housekeeping',
-              profileImage: null
-            },
-            taskType: 'Checkout Cleaning',
-            priority: 'High',
-            status: 'Completed',
-            startedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-            completedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(), // 1 hour ago
-            estimatedDuration: 45,
-            actualDuration: 38,
-            rating: 5,
-            notes: 'Room cleaned thoroughly, guest checkout completed successfully',
-            inspectedBy: 'Sarah Johnson'
-          },
-          {
-            _id: '2',
-            taskNumber: 'CT002',
-            room: { 
-              _id: 'r2', 
-              roomNumber: '205', 
-              roomType: 'Deluxe', 
-              floor: 2,
-              status: 'Clean'
-            },
-            cleanedBy: { 
-              _id: 's2', 
-              name: 'John Smith', 
-              role: 'Housekeeping',
-              profileImage: null
-            },
-            taskType: 'Deep Cleaning',
-            priority: 'Medium',
-            status: 'Completed',
-            startedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-            completedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-            estimatedDuration: 90,
-            actualDuration: 85,
-            rating: 4,
-            notes: 'Deep cleaning completed, carpet shampooed',
-            inspectedBy: 'Mike Wilson'
-          },
-          {
-            _id: '3',
-            taskNumber: 'CT003',
-            room: { 
-              _id: 'r3', 
-              roomNumber: '312', 
-              roomType: 'Suite', 
-              floor: 3,
-              status: 'Clean'
-            },
-            cleanedBy: { 
-              _id: 's3', 
-              name: 'Lisa Chen', 
-              role: 'Housekeeping',
-              profileImage: null
-            },
-            taskType: 'Regular Cleaning',
-            priority: 'Low',
-            status: 'Completed',
-            startedAt: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
-            completedAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-            estimatedDuration: 60,
-            actualDuration: 55,
-            rating: 5,
-            notes: 'Excellent cleaning, all amenities restocked',
-            inspectedBy: 'Sarah Johnson'
-          }
-        ]);
+        const errorText = await tasksResponse.text();
+        console.error('Failed to fetch completed tasks. Status:', tasksResponse.status);
+        console.error('Error response:', errorText);
+        setCompletedRooms([]);
+        toast.error(`❌ Failed to fetch completed tasks: ${tasksResponse.status} - ${errorText}`);
       }
 
       // Fetch housekeeping staff
@@ -153,12 +85,8 @@ const CompletedRoomsManagement = () => {
         console.log('Staff fetched:', staffData.users?.length || 0);
         setStaff(staffData.users || []);
       } else {
-        // Fallback mock data
-        setStaff([
-          { _id: 's1', name: 'Maria Garcia', role: 'Housekeeping' },
-          { _id: 's2', name: 'John Smith', role: 'Housekeeping' },
-          { _id: 's3', name: 'Lisa Chen', role: 'Housekeeping' }
-        ]);
+        console.error('Failed to fetch staff');
+        setStaff([]);
       }
 
     } catch (error) {
@@ -205,21 +133,21 @@ const CompletedRoomsManagement = () => {
     return completedRooms.filter(room => {
       const matchesSearch = !filters.search || 
         room.room?.roomNumber?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        room.cleanedBy?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        room.createdBy?.name?.toLowerCase().includes(filters.search.toLowerCase()) ||
         room.taskNumber?.toLowerCase().includes(filters.search.toLowerCase()) ||
         room.taskType?.toLowerCase().includes(filters.search.toLowerCase());
       
-      const matchesCleanedBy = !filters.cleanedBy || room.cleanedBy?._id === filters.cleanedBy;
+      const matchesCleanedBy = !filters.cleanedBy || room.createdBy?._id === filters.cleanedBy;
       const matchesTaskType = !filters.taskType || room.taskType === filters.taskType;
-      const matchesRating = !filters.rating || room.rating >= parseInt(filters.rating);
+      const matchesRating = !filters.rating || (room.rating || 0) >= parseInt(filters.rating);
       
       const matchesDate = !filters.date || 
-        new Date(room.completedAt).toISOString().split('T')[0] === filters.date;
+        new Date(room.completedDate).toISOString().split('T')[0] === filters.date;
 
       // Time range filtering
       const timeRange = getTimeRangeFilter(selectedTimeRange);
       const matchesTimeRange = !timeRange || 
-        (new Date(room.completedAt) >= timeRange.start && new Date(room.completedAt) <= timeRange.end);
+        (new Date(room.completedDate) >= timeRange.start && new Date(room.completedDate) <= timeRange.end);
 
       return matchesSearch && matchesCleanedBy && matchesTaskType && matchesRating && matchesDate && matchesTimeRange;
     });
@@ -278,14 +206,14 @@ const CompletedRoomsManagement = () => {
     const timeRange = getTimeRangeFilter(selectedTimeRange);
     const rangeRooms = timeRange ? 
       completedRooms.filter(room => {
-        const completedDate = new Date(room.completedAt);
+        const completedDate = new Date(room.completedDate);
         return completedDate >= timeRange.start && completedDate <= timeRange.end;
       }) : completedRooms;
 
     return {
       total: rangeRooms.length,
       avgRating: rangeRooms.length > 0 ? 
-        (rangeRooms.reduce((sum, room) => sum + (room.rating || 0), 0) / rangeRooms.length).toFixed(1) : 0,
+        (rangeRooms.reduce((sum, room) => sum + (room.rating || 4), 0) / rangeRooms.length).toFixed(1) : 0,
       onTime: rangeRooms.filter(room => 
         (room.actualDuration || 0) <= (room.estimatedDuration || 0)
       ).length,
@@ -478,9 +406,15 @@ const CompletedRoomsManagement = () => {
                 onChange={(e) => setFilters(prev => ({ ...prev, cleanedBy: e.target.value }))}
               >
                 <option value="">All Staff</option>
-                {staff.map(s => (
-                  <option key={s._id} value={s._id}>{s.name}</option>
-                ))}
+                {/* Get unique staff from completed tasks */}
+                {Array.from(new Set(completedRooms.map(room => room.createdBy?._id)))
+                  .filter(id => id)
+                  .map(id => {
+                    const staff = completedRooms.find(room => room.createdBy?._id === id)?.createdBy;
+                    return (
+                      <option key={id} value={id}>{staff?.name}</option>
+                    );
+                  })}
               </select>
             </div>
 
@@ -594,20 +528,20 @@ const CompletedRoomsManagement = () => {
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('cleanedBy.name')}
+                      onClick={() => handleSort('createdBy.name')}
                     >
                       <div className="flex items-center gap-2">
                         Cleaned By
-                        <SortIcon column="cleanedBy.name" />
+                        <SortIcon column="createdBy.name" />
                       </div>
                     </th>
                     <th
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleSort('completedAt')}
+                      onClick={() => handleSort('completedDate')}
                     >
                       <div className="flex items-center gap-2">
                         Completed At
-                        <SortIcon column="completedAt" />
+                        <SortIcon column="completedDate" />
                       </div>
                     </th>
                     <th
@@ -670,26 +604,26 @@ const CompletedRoomsManagement = () => {
                             <div className="flex-shrink-0 h-8 w-8">
                               <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
                                 <span className="text-xs font-medium text-purple-600">
-                                  {room.cleanedBy?.name?.charAt(0).toUpperCase()}
+                                  {room.createdBy?.name?.charAt(0).toUpperCase()}
                                 </span>
                               </div>
                             </div>
                             <div className="ml-3">
                               <div className="text-sm font-medium text-gray-900">
-                                {room.cleanedBy?.name}
+                                {room.createdBy?.name}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {room.cleanedBy?.role}
+                                Housekeeping Staff
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div>
-                            {room.completedAt ? new Date(room.completedAt).toLocaleDateString() : 'N/A'}
+                            {room.completedDate ? new Date(room.completedDate).toLocaleDateString() : 'N/A'}
                           </div>
                           <div className="text-xs text-gray-500">
-                            {room.completedAt ? new Date(room.completedAt).toLocaleTimeString() : ''}
+                            {room.completedDate ? new Date(room.completedDate).toLocaleTimeString() : ''}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -701,7 +635,7 @@ const CompletedRoomsManagement = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          {renderStarRating(room.rating || 0)}
+                          {renderStarRating(room.rating || 4)}
                         </td>
                         <td className="px-6 py-4">
                           <div className="max-w-xs">

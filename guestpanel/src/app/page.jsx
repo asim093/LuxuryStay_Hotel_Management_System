@@ -4,18 +4,7 @@ import { BedDouble, Calendar, MapPin, Search, Users2 } from 'lucide-react';
 import HotelCard from './Components/Cards/HotelCard';
 import OfferCard from './Components/Cards/OfferCard';
 import TestimonialCard from './Components/Cards/TestimonialCard';
-
-// Add toast notification if not available
-const toast = {
-  error: (message) => {
-    console.error(message);
-    alert(`Error: ${message}`);
-  },
-  success: (message) => {
-    console.log(message);
-    alert(`Success: ${message}`);
-  }
-};
+import { toast } from 'react-toastify';
 
 export default function HomePage() {
   const [rooms, setRooms] = useState([]);
@@ -24,6 +13,7 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   const [formData, setFormData] = useState({
     guest: "",
@@ -304,6 +294,14 @@ export default function HomePage() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
+  const handleWatchVideo = () => {
+    setShowVideoModal(true);
+  };
+
+  const closeVideoModal = () => {
+    setShowVideoModal(false);
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -399,10 +397,16 @@ export default function HomePage() {
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 animate-slide-in-left delay-500">
-                  <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                  <button 
+                    onClick={() => window.location.href = '/pages/Destinations'}
+                    className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
                     Explore Destinations
                   </button>
-                  <button className="px-8 py-4 border-2 border-white/30 hover:border-white/50 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 backdrop-blur-sm">
+                  <button 
+                    onClick={handleWatchVideo}
+                    className="px-8 py-4 border-2 border-white/30 hover:border-white/50 text-white rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 backdrop-blur-sm"
+                  >
                     Watch Video
                   </button>
                 </div>
@@ -650,6 +654,71 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Video Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="relative w-full max-w-4xl mx-4">
+            {/* Close Button */}
+            <button
+              onClick={closeVideoModal}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors duration-200 z-10"
+            >
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            
+            {/* Video Container */}
+            <div className="relative bg-white rounded-lg overflow-hidden shadow-2xl">
+              <div className="aspect-video">
+                <iframe
+                  width="560"
+                  height="315"
+                  src="https://www.youtube.com/embed/qemqQHaeCYo?si=Blc8PEZrJJMMaJIA&autoplay=1&rel=0&modestbranding=1"
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                  className="w-full h-full"
+                />
+              </div>
+              
+              {/* Video Info */}
+              <div className="p-6 bg-white">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  Experience Luxury at Its Finest
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Discover the world-class amenities, stunning locations, and exceptional service that make our hotels the perfect choice for your next getaway.
+                </p>
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                    </svg>
+                    2.5M views
+                  </span>
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    HD Quality
+                  </span>
+                  <span className="flex items-center">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    3:32 duration
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* CSS Styles */}
       <style jsx>{`
         @keyframes fade-in {
@@ -691,6 +760,7 @@ export default function HomePage() {
           animation-delay: 0.5s;
         }
       `}</style>
-    </div>
-  );
-}
+        
+      </div>
+    );
+  }

@@ -6,6 +6,8 @@ import bookingRoutes from "./src/routes/BookingRoutes.js";
 import billingRoutes from "./src/routes/BillingRoutes.js";
 import settingsRoutes from "./src/routes/SettingsRoutes.js";
 import notificationRoutes from "./src/routes/NotificationRoutes.js";
+import housekeepingRoutes from "./src/routes/HousekeepingRoutes.js";
+import maintenanceRoutes from "./src/routes/MaintenanceRoutes.js";
 import connectDb from "./src/db/index.js";
 import cors from "cors";
 
@@ -26,6 +28,8 @@ app.use("/api/bookings", bookingRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/cleaning-tasks", housekeepingRoutes);
+app.use("/api/maintenance-tasks", maintenanceRoutes);
 
 // Test endpoint
 app.get("/api/test", (req, res) => {

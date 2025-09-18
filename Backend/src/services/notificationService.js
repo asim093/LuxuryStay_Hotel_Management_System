@@ -144,7 +144,7 @@ class NotificationService {
       // Notify Manager about cancellation
       await this.createNotification({
         title: 'Booking Cancellation',
-        message: `Revenue loss: ₹${booking.totalAmount} - Room ${booking.room?.roomNumber} booking cancelled`,
+        message: `Revenue loss: Rs:${booking.totalAmount} - Room ${booking.room?.roomNumber} booking cancelled`,
         type: 'warning',
         category: 'booking',
         recipientRole: 'Manager',

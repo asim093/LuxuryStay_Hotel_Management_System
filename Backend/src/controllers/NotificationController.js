@@ -2,8 +2,16 @@ import NotificationService from '../services/notificationService.js';
 
 export const getNotifications = async (req, res) => {
   try {
-    const userRole = req.user.role;
+    const userRole = req.user?.role;
     const { limit = 50 } = req.query;
+    
+    if (!userRole) {
+      console.error('User role not found in request');
+      return res.status(400).json({
+        success: false,
+        message: 'User role not found'
+      });
+    }
     
     const normalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
     
@@ -27,8 +35,16 @@ export const getNotifications = async (req, res) => {
 // Get unread notification count
 export const getUnreadCount = async (req, res) => {
   try {
-    const userRole = req.user.role;
-    const userId = req.user.id;
+    const userRole = req.user?.role;
+    const userId = req.user?.id;
+    
+    if (!userRole) {
+      console.error('User role not found in request');
+      return res.status(400).json({
+        success: false,
+        message: 'User role not found'
+      });
+    }
     
     // Normalize role case - convert to proper case
     const normalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
@@ -74,7 +90,15 @@ export const markAsRead = async (req, res) => {
 // Mark all notifications as read
 export const markAllAsRead = async (req, res) => {
   try {
-    const userRole = req.user.role;
+    const userRole = req.user?.role;
+    
+    if (!userRole) {
+      console.error('User role not found in request');
+      return res.status(400).json({
+        success: false,
+        message: 'User role not found'
+      });
+    }
     
     // Normalize role case - convert to proper case
     const normalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
@@ -155,12 +179,18 @@ export const deleteNotification = async (req, res) => {
   }
 };
 
-// Get notification statistics
 export const getNotificationStats = async (req, res) => {
   try {
-    const userRole = req.user.role;
+    const userRole = req.user?.role;
     
-    // Normalize role case - convert to proper case
+    if (!userRole) {
+      console.error('User role not found in request');
+      return res.status(400).json({
+        success: false,
+        message: 'User role not found'
+      });
+    }
+    
     const normalizedRole = userRole.charAt(0).toUpperCase() + userRole.slice(1).toLowerCase();
     
     const { NotificationModel } = await import('../Models/Notification.model.js');

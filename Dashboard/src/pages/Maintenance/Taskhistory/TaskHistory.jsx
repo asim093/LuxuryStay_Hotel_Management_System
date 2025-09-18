@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
 import {
     History,
     Search,
@@ -40,159 +42,50 @@ import {
 } from 'lucide-react';
 
 const TaskHistoryPage = () => {
-    // Mock completed tasks data
-    const [completedTasks, setCompletedTasks] = useState([
-        {
-            _id: '1',
-            taskNumber: 'MT-001',
-            title: 'Air Conditioning Repair',
-            description: 'AC unit in Room 205 was not cooling properly. Replaced faulty compressor and cleaned filters.',
-            priority: 'High',
-            status: 'Completed',
-            category: 'HVAC',
-            location: 'Room 205',
-            reportedBy: { name: 'John Doe', role: 'Front Desk' },
-            assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-            createdAt: '2024-01-10T10:30:00Z',
-            completedAt: '2024-01-11T16:45:00Z',
-            dueDate: '2024-01-12T18:00:00Z',
-            estimatedCost: 150,
-            actualCost: 180,
-            estimatedHours: 2,
-            actualHours: 2.5,
-            satisfaction: 5,
-            materials: ['Compressor', 'Air Filter', 'Coolant'],
-            notes: [
-                { text: 'Diagnosed faulty compressor. Ordered replacement part.', timestamp: '2024-01-10T14:00:00Z', author: 'Mike Johnson' },
-                { text: 'Replaced compressor and tested system. Working properly.', timestamp: '2024-01-11T16:00:00Z', author: 'Mike Johnson' }
-            ]
-        },
-        {
-            _id: '2',
-            taskNumber: 'MT-002',
-            title: 'Plumbing - Leaky Faucet',
-            description: 'Bathroom faucet in Room 102 had persistent drip. Replaced washer and O-ring.',
-            priority: 'Medium',
-            status: 'Completed',
-            category: 'Plumbing',
-            location: 'Room 102',
-            reportedBy: { name: 'Sarah Wilson', role: 'Housekeeping' },
-            assignedTo: { name: 'Tom Brown', role: 'Maintenance' },
-            createdAt: '2024-01-08T14:20:00Z',
-            completedAt: '2024-01-09T11:30:00Z',
-            dueDate: '2024-01-10T12:00:00Z',
-            estimatedCost: 25,
-            actualCost: 20,
-            estimatedHours: 1,
-            actualHours: 0.5,
-            satisfaction: 4,
-            materials: ['Washer', 'O-ring'],
-            notes: [
-                { text: 'Quick fix. Replaced worn washer.', timestamp: '2024-01-09T11:00:00Z', author: 'Tom Brown' }
-            ]
-        },
-        {
-            _id: '3',
-            taskNumber: 'MT-003',
-            title: 'Electrical - Light Fixture',
-            description: 'Ceiling light in lobby area was flickering. Replaced ballast and cleaned connections.',
-            priority: 'Low',
-            status: 'Completed',
-            category: 'Electrical',
-            location: 'Lobby',
-            reportedBy: { name: 'Emma Davis', role: 'Manager' },
-            assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-            createdAt: '2024-01-05T08:45:00Z',
-            completedAt: '2024-01-06T14:15:00Z',
-            dueDate: '2024-01-08T17:00:00Z',
-            estimatedCost: 50,
-            actualCost: 45,
-            estimatedHours: 1,
-            actualHours: 0.75,
-            satisfaction: 5,
-            materials: ['Ballast', 'Wire nuts'],
-            notes: [
-                { text: 'Replaced faulty ballast and cleaned fixture.', timestamp: '2024-01-06T14:00:00Z', author: 'Mike Johnson' }
-            ]
-        },
-        {
-            _id: '4',
-            taskNumber: 'MT-004',
-            title: 'Internet Connectivity Issue',
-            description: 'WiFi signal weak in conference room. Installed signal booster and repositioned access point.',
-            priority: 'High',
-            status: 'Completed',
-            category: 'Technology',
-            location: 'Conference Room A',
-            reportedBy: { name: 'Alex Chen', role: 'IT Support' },
-            assignedTo: { name: 'Mike Johnson', role: 'Maintenance' },
-            createdAt: '2024-01-03T16:00:00Z',
-            completedAt: '2024-01-04T12:30:00Z',
-            dueDate: '2024-01-05T10:00:00Z',
-            estimatedCost: 200,
-            actualCost: 175,
-            estimatedHours: 3,
-            actualHours: 2.5,
-            satisfaction: 4,
-            materials: ['WiFi Booster', 'Ethernet Cable'],
-            notes: [
-                { text: 'Installed signal booster. Signal strength improved significantly.', timestamp: '2024-01-04T12:00:00Z', author: 'Mike Johnson' }
-            ]
-        },
-        {
-            _id: '5',
-            taskNumber: 'MT-005',
-            title: 'Preventive Maintenance - HVAC',
-            description: 'Monthly HVAC system inspection and filter replacement completed successfully.',
-            priority: 'Medium',
-            status: 'Completed',
-            category: 'HVAC',
-            location: 'Roof Top - HVAC Units',
-            reportedBy: { name: 'System', role: 'Automated' },
-            assignedTo: { name: 'Tom Brown', role: 'Maintenance' },
-            createdAt: '2024-01-01T00:00:00Z',
-            completedAt: '2024-01-02T15:45:00Z',
-            dueDate: '2024-01-03T16:00:00Z',
-            estimatedCost: 100,
-            actualCost: 95,
-            estimatedHours: 4,
-            actualHours: 3.5,
-            satisfaction: 5,
-            materials: ['Air Filters', 'Lubricant', 'Cleaning Supplies'],
-            notes: [
-                { text: 'All systems running optimally. Replaced filters and lubricated motors.', timestamp: '2024-01-02T15:00:00Z', author: 'Tom Brown' }
-            ]
-        },
-        {
-            _id: '6',
-            taskNumber: 'MT-006',
-            title: 'Door Lock Replacement',
-            description: 'Electronic door lock in Room 301 was malfunctioning. Replaced with new smart lock.',
-            priority: 'Medium',
-            status: 'Completed',
-            category: 'General',
-            location: 'Room 301',
-            reportedBy: { name: 'Lisa Martinez', role: 'Housekeeping' },
-            assignedTo: { name: 'Tom Brown', role: 'Maintenance' },
-            createdAt: '2023-12-28T09:15:00Z',
-            completedAt: '2023-12-29T13:30:00Z',
-            dueDate: '2023-12-30T17:00:00Z',
-            estimatedCost: 120,
-            actualCost: 115,
-            estimatedHours: 1.5,
-            actualHours: 1.25,
-            satisfaction: 4,
-            materials: ['Smart Lock', 'Batteries', 'Screws'],
-            notes: [
-                { text: 'Old lock removed successfully. New smart lock installed and tested.', timestamp: '2023-12-29T13:00:00Z', author: 'Tom Brown' }
-            ]
+    const token = useSelector((state) => state.user.token);
+    const [completedTasks, setCompletedTasks] = useState([]);
+
+    // Fetch completed maintenance tasks data
+    const fetchCompletedTasks = async () => {
+        setLoading(true);
+        try {
+            console.log('Fetching completed maintenance tasks...');
+
+            const response = await fetch('http://localhost:3001/api/maintenance-tasks/completed', {
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Completed maintenance tasks fetched:', data.tasks?.length || 0);
+                setCompletedTasks(data.tasks || []);
+                toast.success(`✅ Loaded ${data.tasks?.length || 0} completed maintenance tasks`);
+            } else {
+                const errorText = await response.text();
+                console.error('Failed to fetch completed maintenance tasks. Status:', response.status);
+                setCompletedTasks([]);
+                toast.error(`❌ Failed to fetch completed tasks: ${response.status}`);
+            }
+
+        } catch (error) {
+            console.error('Error fetching completed maintenance tasks:', error);
+            toast.error('❌ Error fetching data');
+        } finally {
+            setLoading(false);
         }
-    ]);
+    };
+
+    useEffect(() => {
+        fetchCompletedTasks();
+    }, []);
 
     const [loading, setLoading] = useState(false);
     const [selectedTask, setSelectedTask] = useState(null);
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [sortConfig, setSortConfig] = useState({ key: 'completedAt', direction: 'desc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'completedDate', direction: 'desc' });
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage] = useState(10);
     const [filters, setFilters] = useState({
@@ -242,10 +135,10 @@ const TaskHistoryPage = () => {
             const matchesAssignedTo = !filters.assignedTo || task.assignedTo?.name.toLowerCase().includes(filters.assignedTo.toLowerCase());
 
             const matchesDateFrom = !filters.dateFrom ||
-                new Date(task.completedAt).toISOString().split('T')[0] >= filters.dateFrom;
+                new Date(task.completedDate).toISOString().split('T')[0] >= filters.dateFrom;
 
             const matchesDateTo = !filters.dateTo ||
-                new Date(task.completedAt).toISOString().split('T')[0] <= filters.dateTo;
+                new Date(task.completedDate).toISOString().split('T')[0] <= filters.dateTo;
 
             const matchesSatisfaction = !filters.satisfactionMin ||
                 task.satisfaction >= parseInt(filters.satisfactionMin);
@@ -325,7 +218,7 @@ const TaskHistoryPage = () => {
         }, 0);
 
         const onTimeCompletion = completedTasks.filter(task =>
-            new Date(task.completedAt) <= new Date(task.dueDate)
+            new Date(task.completedDate) <= new Date(task.scheduledDate)
         ).length;
 
         const categoryBreakdown = completedTasks.reduce((acc, task) => {
@@ -368,9 +261,9 @@ const TaskHistoryPage = () => {
     };
 
     // Calculate task duration
-    const calculateDuration = (createdAt, completedAt) => {
+    const calculateDuration = (createdAt, completedDate) => {
         const start = new Date(createdAt);
-        const end = new Date(completedAt);
+        const end = new Date(completedDate);
         const diffHours = Math.abs(end - start) / (1000 * 60 * 60);
 
         if (diffHours < 24) {
@@ -702,11 +595,11 @@ const TaskHistoryPage = () => {
                                         </th>
                                         <th
                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                                            onClick={() => handleSort('completedAt')}
+                                            onClick={() => handleSort('completedDate')}
                                         >
                                             <div className="flex items-center gap-2">
                                                 Completed
-                                                <SortIcon column="completedAt" />
+                                                <SortIcon column="completedDate" />
                                             </div>
                                         </th>
                                         <th
@@ -755,7 +648,7 @@ const TaskHistoryPage = () => {
                                         const priorityInfo = priorityConfig[task.priority];
                                         const CategoryIcon = categoryIcons[task.category] || ToolCase;
                                         const PriorityIcon = priorityInfo?.icon || Clock;
-                                        const duration = calculateDuration(task.createdAt, task.completedAt);
+                                        const duration = calculateDuration(task.createdAt, task.completedDate);
                                         const costVariance = (task.actualCost || 0) - (task.estimatedCost || 0);
                                         const timeVariance = (task.actualHours || 0) - (task.estimatedHours || 0);
 
@@ -791,7 +684,7 @@ const TaskHistoryPage = () => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className="text-sm text-gray-900">
-                                                        {formatDate(task.completedAt)}
+                                                        {formatDate(task.completedDate)}
                                                     </div>
                                                     <div className="text-xs text-gray-500">
                                                         {duration} total
@@ -986,12 +879,12 @@ const TaskHistoryPage = () => {
                                             <p className="text-sm text-gray-900">{formatDate(selectedTask.createdAt)}</p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                                            <p className="text-sm text-gray-900">{formatDate(selectedTask.dueDate)}</p>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Scheduled Date</label>
+                                            <p className="text-sm text-gray-900">{formatDate(selectedTask.scheduledDate)}</p>
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Completed</label>
-                                            <p className="text-sm text-gray-900">{formatDate(selectedTask.completedAt)}</p>
+                                            <p className="text-sm text-gray-900">{formatDate(selectedTask.completedDate)}</p>
                                         </div>
                                     </div>
 
